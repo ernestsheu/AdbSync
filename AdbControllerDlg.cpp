@@ -290,7 +290,7 @@ DWORD
 AdbExecThread(LPVOID lpParam)
 {
 	PTouchThreadData pDevice;
-	HANDLE ghEvents[2];
+	HANDLE ghEvents[3];
 	DWORD dwEvent;
 
 	pDevice = (PTouchThreadData)lpParam;
