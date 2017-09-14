@@ -143,10 +143,8 @@ void OutputString(CEdit* pEdit, LPCTSTR pszFormat, ...)
 		nLen -= BUF_SIZE;
 		ATLASSERT(pEdit->SendMessage(WM_GETTEXTLENGTH) == (LRESULT)nLen);
 	}
-
-	pEdit->SetSel(nLen, nLen, FALSE /*scroll*/);
-	pEdit->ReplaceSel(_T("\r\n"));
-	nLen += 2;
+	
+	str += _T("\r\n");
 	pEdit->SetSel(nLen, nLen, FALSE /*scroll*/);
 	pEdit->ReplaceSel(str);
 
@@ -313,7 +311,7 @@ AdbExecThread(LPVOID lpParam)
 			case WAIT_OBJECT_0 + 0: {
 				//OutputDebugString(_T("First event was signaled.\n"));
 
-				if(pDevice->bMoveSync) {
+				if(pDevice->bSync) {
 					CString cmd;
 					cmd.Format(_T("adb -s %s shell input tap %d %d "), pDevice->Serial, pDevice->ptTapXY.x, pDevice->ptTapXY.y);
 					OutputDebugString(cmd + _T("\n"));
@@ -330,7 +328,7 @@ AdbExecThread(LPVOID lpParam)
 
 			// hMoveEvent
 			case WAIT_OBJECT_0 + 1: {
-				if(pDevice->bSync) {
+				if(pDevice->bMoveSync) {
 					CString cmd;
 					cmd.Format( _T("adb -s %s shell input swipe %d %d %d %d %d"),
 					            pDevice->Serial,
