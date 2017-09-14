@@ -53,20 +53,21 @@
 #define IDC_S4_STOP_BTN                 1040
 #define IDC_S3_DEVICE_BTN2              1041
 #define IDC_CONNECT_DEVICES             1041
+#define IDC_CONNECT_DEVICES2            1042
+#define IDC_DISCONNECT_DEVICES          1042
 #define IDC_CENTER_X                    1043
 #define IDC_CENTER_Y                    1044
 #define IDC_MOVE_OFFSET                 1046
 #define IDC_MOVE_DURATION               1047
-
 #define IDC_MOVE_UP                     1048
-#define IDC_MOVE_LEFT                	1049
+#define IDC_MOVE_LEFT                   1049
 #define IDC_MOVE_LEFT_UP                1050
 #define IDC_MOVE_LEFT_UP_UP             1051
 #define IDC_MOVE_LEFT_UP_DW             1052
 #define IDC_MOVE_LEFT_DW                1053
 #define IDC_MOVE_LEFT_DW_UP             1054
 #define IDC_MOVE_LEFT_DW_DW             1055
-#define IDC_MOVE_RIGHT                	1056
+#define IDC_MOVE_RIGHT                  1056
 #define IDC_MOVE_RIGHT_UP               1057
 #define IDC_MOVE_RIGHT_UP_UP            1058
 #define IDC_MOVE_RIGHT_UP_DW            1059
@@ -74,7 +75,6 @@
 #define IDC_MOVE_RIGHT_DW_UP            1061
 #define IDC_MOVE_RIGHT_DW_DW            1062
 #define IDC_MOVE_DOWN                   1063
-
 #define IDC_SYNC_MOVE_MASTER            1064
 #define IDC_SYNC_MOVE_SLAVE_1           1065
 #define IDC_SYNC_MOVE_SLAVE_2           1066

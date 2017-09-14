@@ -115,6 +115,46 @@ int SplitString(CString& content, TCHAR token, CStringList& outList)
 	return (int)outList.GetCount();
 }
 
+
+void OutputString(CEdit* pEdit, LPCTSTR pszFormat, ...)
+{
+#define BUF_SIZE 255
+
+	CString str;
+	va_list argList;
+
+	va_start( argList, pszFormat );
+	str.FormatV( pszFormat, argList );
+	va_end( argList );
+
+
+	// Add the text in the end
+	// SetSel(-1, -1) just cancels selection, we need exact length to force caret @ end
+	UINT nLen = pEdit->SendMessage(WM_GETTEXTLENGTH);
+	// ensure that the control won't be overflowed
+	UINT nMax = pEdit->GetLimitText();
+	ATLASSERT(nMax > BUF_SIZE);
+
+	// Perhaps switch to a max line# setting
+	if(nLen > nMax - BUF_SIZE) {
+		// waste some characters from the top, not necessarily complete lines
+		pEdit->SetSel(0, BUF_SIZE, TRUE);
+		pEdit->ReplaceSel(_T(""));
+		nLen -= BUF_SIZE;
+		ATLASSERT(pEdit->SendMessage(WM_GETTEXTLENGTH) == (LRESULT)nLen);
+	}
+
+	pEdit->SetSel(nLen, nLen, FALSE /*scroll*/);
+	pEdit->ReplaceSel(_T("\r\n"));
+	nLen += 2;
+	pEdit->SetSel(nLen, nLen, FALSE /*scroll*/);
+	pEdit->ReplaceSel(str);
+
+}
+
+
+
+
 CString ExecCmd(
     LPCTSTR cmd              // [in] command to execute
 )
@@ -247,7 +287,7 @@ BOOL ExecCmdSimple (
 
 
 DWORD
-AdbTouchThread(LPVOID lpParam)
+AdbExecThread(LPVOID lpParam)
 {
 	PTouchThreadData pDevice;
 	HANDLE ghEvents[2];
@@ -256,7 +296,8 @@ AdbTouchThread(LPVOID lpParam)
 	pDevice = (PTouchThreadData)lpParam;
 
 	ghEvents[0] = pDevice->hTouchEvent;
-	ghEvents[1] = pDevice->hExitEvent;
+	ghEvents[1] = pDevice->hMoveEvent;
+	ghEvents[2] = pDevice->hExitEvent;
 
 	while(TRUE) {
 		dwEvent =
@@ -270,19 +311,48 @@ AdbTouchThread(LPVOID lpParam)
 		switch (dwEvent) {
 			// nTouchEvent
 			case WAIT_OBJECT_0 + 0: {
-				OutputDebugString(_T("First event was signaled.\n"));
+				//OutputDebugString(_T("First event was signaled.\n"));
 
-				if(pDevice->bSync) {
+				if(pDevice->bMoveSync) {
 					CString cmd;
 					cmd.Format(_T("adb -s %s shell input tap %d %d "), pDevice->Serial, pDevice->ptTapXY.x, pDevice->ptTapXY.y);
 					OutputDebugString(cmd + _T("\n"));
+					OutputString(
+					    pDevice->wndStatus,
+					    _T("[%s] Tap( %d, %d)"),
+					    pDevice->Serial,
+					    pDevice->ptTapXY.x, pDevice->ptTapXY.y
+					);
 					ExecCmdSimple((LPCTSTR)cmd);
 				}
 			}
 			break;
 
-			// nExitEvent
-			case WAIT_OBJECT_0 + 1:
+			// hMoveEvent
+			case WAIT_OBJECT_0 + 1: {
+				if(pDevice->bSync) {
+					CString cmd;
+					cmd.Format( _T("adb -s %s shell input swipe %d %d %d %d %d"),
+					            pDevice->Serial,
+					            pDevice->ptStartXY.x, pDevice->ptStartXY.y,
+					            pDevice->ptEndXY.x, pDevice->ptEndXY.y,
+					            pDevice->nMoveDuration
+					          );
+					OutputString(
+					    pDevice->wndStatus,
+					    _T("[%s] Swipe( %d, %d, %d, %d) duration:%d ms"),
+					    pDevice->Serial,
+					    pDevice->ptStartXY.x, pDevice->ptStartXY.y,
+					    pDevice->ptEndXY.x, pDevice->ptEndXY.y,
+					    pDevice->nMoveDuration
+					);
+					ExecCmdSimple((LPCTSTR)cmd);
+				}
+			}
+			break;
+
+			// hExitEvent
+			case WAIT_OBJECT_0 + 2:
 				OutputDebugString(_T("Second event was signaled.\n"));
 				goto exit;
 
@@ -295,6 +365,7 @@ AdbTouchThread(LPVOID lpParam)
 				CString Tmp;
 				Tmp.Format(_T("Wait error: %d\n"), GetLastError());
 				OutputDebugString(Tmp);
+				OutputString( pDevice->wndStatus, Tmp);
 				ExitProcess(0);
 		}
 	}
@@ -307,38 +378,6 @@ exit:
 	return 0;
 }
 
-
-void OutputString(CEdit* pEdit, LPCTSTR pszFormat, ...)
-{
-#define BUF_SIZE 255
-
-	CString str;
-	va_list argList;
-	va_start( argList, pszFormat );
-	str.FormatV( pszFormat, argList );
-	va_end( argList );
-
-
-	// add the text in the end
-	// SetSel(-1, -1) just cancels selection, we need exact length to force caret @ end
-	UINT nLen = pEdit->SendMessage(WM_GETTEXTLENGTH);
-	// ensure that the control won't be overflowed
-	UINT nMax = pEdit->GetLimitText();
-	ATLASSERT(nMax > BUF_SIZE);
-
-	// perhaps switch to a max line# setting
-	if(nLen > nMax - BUF_SIZE) {
-		// waste some characters from the top, not necessarily complete lines
-		pEdit->SetSel(0, BUF_SIZE, TRUE);
-		pEdit->ReplaceSel(_T(""));
-		nLen -= BUF_SIZE;
-		ATLASSERT(pEdit->SendMessage(WM_GETTEXTLENGTH) == (LRESULT)nLen);
-	}
-
-	pEdit->SetSel(nLen, nLen, FALSE /*scroll*/);	
-	pEdit->ReplaceSel(str);
-	
-}
 
 
 
@@ -429,7 +468,32 @@ BEGIN_MESSAGE_MAP(CAdbControllerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CMD_OUT_CLEAR, &CAdbControllerDlg::OnBnClickedCmdOutClear)
 	ON_BN_CLICKED(IDC_STATUS_OUT_CLEAR, &CAdbControllerDlg::OnBnClickedStatusOutClear)
 	ON_BN_CLICKED(IDC_CONNECT_DEVICES, &CAdbControllerDlg::OnBnClickedConnectDevices)
+	ON_BN_CLICKED(IDC_DISCONNECT_DEVICES, &CAdbControllerDlg::OnBnClickedDisconnectDevices)
 END_MESSAGE_MAP()
+
+
+
+#define PRJ_DEVICE 			_T("device ")
+#define PRJ_DEVICE_SERIAL 	_T("serial")
+#define PRJ_TOUCH_EVT 		_T("touch_evt")
+#define PRJ_SYNC_CHECK 		_T("sync_chk")
+
+#define PRJ_MAIN 			_T("main")
+#define PRJ_CMD_LINE		_T("cmd_line")
+
+#define PRJ_SYNC_MOVE 			_T("sync_move")
+#define PRJ_CENTER_X 			_T("center_x")
+#define PRJ_CENTER_Y 			_T("center_y")
+#define PRJ_MOVE_LEN 			_T("move_length")
+#define PRJ_MOVE_DURATION 		_T("move_duration")
+#define PRJ_SYNC_MOVE_MASTER	_T("move_master")
+#define PRJ_SYNC_MOVE_SLAVE1	_T("move_slave1")
+#define PRJ_SYNC_MOVE_SLAVE2	_T("move_sllave2")
+#define PRJ_SYNC_MOVE_SLAVE3	_T("move_sllave3")
+#define PRJ_SYNC_MOVE_SLAVE4	_T("move_sllave4")
+
+
+
 
 
 BOOL CAdbControllerDlg::OnInitDialog()
@@ -439,7 +503,7 @@ BOOL CAdbControllerDlg::OnInitDialog()
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
-	SetWindowText(_T("AdbController Ver.0.01 beta"));
+	SetWindowText(_T("AdbController Ver.0.02 beta"));
 
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
 
@@ -503,7 +567,11 @@ BOOL CAdbControllerDlg::OnInitDialog()
 
 	LoadProfile();
 	BuildAdbDevice();
-
+	/*
+	OutputString(m_wStatus, _T("AAA"));
+	OutputString(m_wStatus, _T("CCC"));
+	OutputString(m_wStatus, _T("x:%d, y:%d"), 100, 200);
+	*/
 	return TRUE;
 }
 
@@ -521,6 +589,7 @@ void CAdbControllerDlg::OnDestroy()
 		CloseHandle(device.PTouchThreadParam->hTouchEvent);
 		CloseHandle(device.PTouchThreadParam->hExitEvent);
 		CloseHandle(device.PTouchThreadParam->hExitFinishedEvent);
+		CloseHandle(device.PTouchThreadParam->hMoveEvent);
 		CloseHandle(device.hThread);
 		delete device.PTouchThreadParam;
 	}
@@ -937,6 +1006,7 @@ void CAdbControllerDlg::OnRun()
 void CAdbControllerDlg::OnBreak()
 {
 	OutputDebugString(_T("OnBreak()\n"));
+
 	if (m_pLastCommand == NULL) {
 		return;
 	}
@@ -1001,6 +1071,13 @@ void CAdbControllerDlg::OnCancel()
 
 
 
+void CAdbControllerDlg::OnBnClickedDisconnectDevices()
+{
+	int retval = ::_tsystem( _T("taskkill /F /T /IM adb.exe") );
+	OutputString( m_wStatus, _T("Kill all adb servers, ret:%d"), retval);
+}
+
+
 void CAdbControllerDlg::OnCtrlRgn_Device_Id_Changed(UINT nID)
 {
 	CString temp;
@@ -1030,25 +1107,27 @@ void CAdbControllerDlg::OnCtrlRgn_Sync_Checkbox(UINT nID)
 void CAdbControllerDlg::OnCtrlRgn_Connect_Device(UINT nID)
 {
 	OnBreak();
-		
+
 	CString temp;
 	temp.Format(_T("OnCtrlRgn_Find_Device(%d)\n"), nID);
 	OutputDebugString(temp);
 	int nDeviceIdx = FindDeviceIndex( nID, offsetof(struct _DEVICE_CONTROL_IDS, nBtnD_FindDevice));
+
 	if(nDeviceIdx == -1) {
 		return;
 	}
-	
+
 	CString serial;
 	GetDlgItem(G_DEVICE_CONTROL_MAP[nDeviceIdx].nEditID_Device)->GetWindowText(serial);
 	CString cmd;
 	cmd.Format(_T("adb connect %s"), serial);
+	OutputString( m_wStatus, _T("connect %s"), serial);
 	m_wCommand->SetWindowText(cmd);
-	
+
 	OnRun();
-	
+
 	m_bNeedUpdateSyncDeviceList = TRUE;
-	
+
 }
 
 void CAdbControllerDlg::OnCtrlRgn_Detect_Touch_Event(UINT nID)
@@ -1058,16 +1137,17 @@ void CAdbControllerDlg::OnCtrlRgn_Detect_Touch_Event(UINT nID)
 	CString temp;
 	temp.Format(_T("OnCtrlRgn_Detect_Touch_Event(%d)\n"), nID);
 	OutputDebugString(temp);
-	
+
 	int nDeviceIdx = FindDeviceIndex( nID, offsetof(struct _DEVICE_CONTROL_IDS, nBtnD_DetectTouchEvt));
+
 	if(nDeviceIdx == -1) {
 		return;
 	}
-	
+
 	CString serial;
 	GetDlgItem(G_DEVICE_CONTROL_MAP[nDeviceIdx].nEditID_Device)->GetWindowText(serial);
 	CString cmd;
-	cmd.Format(_T("adb -s %s shell getevent"), serial);	
+	cmd.Format(_T("adb -s %s shell getevent"), serial);
 	m_wCommand->SetWindowText(cmd);
 
 	EnableDeviceControl(TRUE, offsetof(struct _DEVICE_CONTROL_IDS, nChkID_Sync));
@@ -1077,7 +1157,7 @@ void CAdbControllerDlg::OnCtrlRgn_Detect_Touch_Event(UINT nID)
 	button->EnableWindow(FALSE);
 
 	m_bNeedUpdateSyncDeviceList = TRUE;
-	
+
 }
 
 void CAdbControllerDlg::OnCtrlRgn_Play_Event(UINT nID)
@@ -1102,119 +1182,75 @@ void CAdbControllerDlg::OnCtrlRgn_Sync_Change(UINT nID)
 	m_bNeedUpdateMoveSync = TRUE;
 }
 
+
+#define R_X( r, degree) ((double)r*cos(degree))
+#define R_Y( r, degree) ((double)r*sin(degree))
+
+#define Joy_X(center_x, r, degree) (center_x + (int)R_X(r, degree))
+#define Joy_Y(center_y, r, degree) (center_y + (int)R_Y(r, degree))
+
+
 void CAdbControllerDlg::OnCtrlRgn_Move_Event(UINT nID)
 {
 	CString temp;
 	temp.Format(_T("OnCtrlRgn_Move_Event(%d)\n"), nID);
 	OutputDebugString(temp);
 
-	if(m_bNeedUpdateMoveSync){
+	int degree = 0;
+
+	if(m_bNeedUpdateMoveSync) {
 		UpdateMove();
 		m_bNeedUpdateMoveSync = FALSE;
 	}
 
 	CPoint pt2;
-	
-	switch(nID){
-		case IDC_MOVE_UP:{
-			pt2.x = m_ptMove.x;
-			pt2.y = m_ptMove.y - m_MoveLength;
-		}
-		break;
-		
-		case IDC_MOVE_LEFT:{
-			pt2.x = m_ptMove.x - m_MoveLength;
-			pt2.y = m_ptMove.y;
-		}
-		break;
-		
-		case IDC_MOVE_LEFT_UP:{
-		}
-		break;
-		
-		case IDC_MOVE_LEFT_UP_UP:{
-		}
-		break;
-		
-		case IDC_MOVE_LEFT_UP_DW:{
-		}
-		break;
-		
-		case IDC_MOVE_LEFT_DW:{
-		}
-		break;
-		
-		case IDC_MOVE_LEFT_DW_UP:{
-		}
-		break;
-		
-		case IDC_MOVE_LEFT_DW_DW:{
-		}
-		break;
-		
-		case IDC_MOVE_RIGHT:{
-			pt2.x = m_ptMove.x + m_MoveLength;
-			pt2.y = m_ptMove.y;
-		}
-		break;
-		
-		case IDC_MOVE_RIGHT_UP:{
-		}
-		break;
-		
-		case IDC_MOVE_RIGHT_UP_UP:{
-		}
-		break;
-		
-		case IDC_MOVE_RIGHT_UP_DW:{
-		}
-		break;
-		
-		case IDC_MOVE_RIGHT_DW:{
-		}
-		break;
-		
-		case IDC_MOVE_RIGHT_DW_UP:{
-		}
-		break;
-		
-		case IDC_MOVE_RIGHT_DW_DW:{
-		}
-		break;
-		
-		case IDC_MOVE_DOWN:{
-			pt2.x = m_ptMove.x;
-			pt2.y = m_ptMove.y + m_MoveLength;
-		}
-		break;
 
-		default:
-			return;
+	/*
+		ref: https://market.cloud.edu.tw/content/senior/math/tn_t2/math01/3th/4-1/4-1.htm
+		center point: p0(x0,y0)
+		target point: p(x, y)
+		length: r
+		(x-x0)^2+(y-y0)^2 = r^2
 
-	}
+		x = r*cos(@)
+		y = r*sin(@)
+	*/
+	if (nID == IDC_MOVE_UP) 				degree = 90;
+	else if (nID == IDC_MOVE_LEFT) 			degree = 180;
+	else if (nID == IDC_MOVE_LEFT_UP) 		degree = 135;
+	else if (nID == IDC_MOVE_LEFT_UP_UP)	degree = 112;
+	else if (nID == IDC_MOVE_LEFT_UP_DW) 	degree = 158;
+	else if (nID == IDC_MOVE_LEFT_DW) 		degree = 225;
+	else if (nID == IDC_MOVE_LEFT_DW_UP)	degree = 203;
+	else if (nID == IDC_MOVE_LEFT_DW_DW)	degree = 248;
+	else if (nID == IDC_MOVE_RIGHT) 		degree = 0;
+	else if (nID == IDC_MOVE_RIGHT_UP) 		degree = 45;
+	else if (nID == IDC_MOVE_RIGHT_UP_UP) 	degree = 68;
+	else if (nID == IDC_MOVE_RIGHT_UP_DW) 	degree = 23;
+	else if (nID == IDC_MOVE_RIGHT_DW) 		degree = 315;
+	else if (nID == IDC_MOVE_RIGHT_DW_UP)	degree = 378;
+	else if (nID == IDC_MOVE_RIGHT_DW_DW)	degree = 293;
+	else if (nID == IDC_MOVE_DOWN)			degree = 270;
+	else return;
 
+	pt2.x = Joy_X( m_ptMove.x, m_MoveLength, degree);
+	pt2.y = Joy_Y( m_ptMove.y, m_MoveLength, degree);
 
 	POSITION pos = m_SyncDevices.GetHeadPosition();
 
 	while(pos) {
 		CAdbDevice device = m_SyncDevices.GetNext(pos);
 		// input swipe 150 565 150 450 10000
-		CString cmd;
-		cmd.Format( _T("adb -s %s shell input swipe %d %d %d %d %d"),
-					device.PTouchThreadParam->Serial,
-					m_ptMove.x, m_ptMove.y,
-					pt2.x, pt2.y,
-					m_MoveDuration
-					);
-		ExecCmdSimple((LPCTSTR)cmd);		
+		device.PTouchThreadParam->ptStartXY = m_ptMove;
+		device.PTouchThreadParam->ptEndXY = pt2;
+		device.PTouchThreadParam->nMoveDuration = m_MoveDuration;
+
+		SetEvent(device.PTouchThreadParam->hMoveEvent);
 	}
 
 
-	
+
 }
-
-
-
 
 void CAdbControllerDlg::OnTouchSyncReceived(LPCTSTR pszText)
 {
@@ -1228,6 +1264,36 @@ void CAdbControllerDlg::OnTouchSyncReceived(LPCTSTR pszText)
 	m_SyncTouchDataOrder++;
 
 	LeaveCriticalSection (&m_SyncReceivedLock);
+
+}
+
+void CAdbControllerDlg::OnBnClickedCmdOutClear()
+{
+	CEdit* edit = (CEdit*)GetDlgItem(IDC_OUTPUT);
+	edit->SetWindowText(_T(""));
+}
+
+void CAdbControllerDlg::OnBnClickedStatusOutClear()
+{
+	CEdit* edit = (CEdit*)GetDlgItem(IDC_STATUS_OUTPUT);
+	edit->SetWindowText(_T(""));
+}
+
+void CAdbControllerDlg::OnBnClickedConnectDevices()
+{
+	OnBreak();
+
+	for(int idx = DEV_MASTER; idx < TOTAL_DEVICE; idx++) {
+		CString serial;
+		GetDlgItem(G_DEVICE_CONTROL_MAP[idx].nEditID_Device)->GetWindowText(serial);
+		CString cmd;
+		cmd.Format(_T("adb connect %s"), serial);
+		OutputString( m_wStatus, _T("connect %s"), serial);
+		ExecCmdSimple(cmd);
+	}
+
+	m_wCommand->SetWindowText(_T("adb devices"));
+	OnRun();
 
 }
 
@@ -1259,24 +1325,24 @@ void CAdbControllerDlg::UpdateMove()
 	while(pos) {
 		CAdbDevice device = m_SyncDevices.GetNext(pos);
 		CButton* checkBox = (CButton*)GetDlgItem(G_DEVICE_CONTROL_MAP[device.DeviceIdx].nBtnD_MoveSync);
-		device.PTouchThreadParam->bMoveSync = checkBox->GetCheck() > 0;		
+		device.PTouchThreadParam->bMoveSync = checkBox->GetCheck() > 0;
 	}
-	
+
 	CEdit* editor;
 	CString text;
-	
+
 	editor = (CEdit*)GetDlgItem(IDC_CENTER_X);
 	editor->GetWindowText(text);
 	m_ptMove.x = _wtoi((LPCTSTR)text);
-	
+
 	editor = (CEdit*)GetDlgItem(IDC_CENTER_Y);
 	editor->GetWindowText(text);
 	m_ptMove.y = _wtoi((LPCTSTR)text);
-	
+
 	editor = (CEdit*)GetDlgItem(IDC_MOVE_OFFSET);
 	editor->GetWindowText(text);
 	m_MoveLength = _wtoi((LPCTSTR)text);
-	
+
 	editor = (CEdit*)GetDlgItem(IDC_MOVE_DURATION);
 	editor->GetWindowText(text);
 	m_MoveDuration = _wtoi((LPCTSTR)text);
@@ -1295,6 +1361,7 @@ void CAdbControllerDlg::BuildAdbDevice()
 		device.PTouchThreadParam = new TouchThreadData;
 		editorDevice->GetWindowText(device.PTouchThreadParam->Serial);
 		editorTouchEvt->GetWindowText(device.PTouchThreadParam->TouchEvt);
+		device.PTouchThreadParam->wndStatus = m_wStatus;
 		device.PTouchThreadParam->bSync = checkBox->GetCheck() > 0;
 		device.PTouchThreadParam->hExitEvent =
 		    CreateEvent(
@@ -1317,13 +1384,20 @@ void CAdbControllerDlg::BuildAdbDevice()
 		        FALSE,	// initial state is nonsignaled
 		        NULL  	// object name
 		    );
+		device.PTouchThreadParam->hMoveEvent =
+		    CreateEvent(
+		        NULL,	// default security attributes
+		        FALSE,	// manual-reset event
+		        FALSE,	// initial state is nonsignaled
+		        NULL  	// object name
+		    );
 
 		device.DeviceIdx = idx;
 		device.hThread =
 		    CreateThread(
 		        NULL,			// default security attributes
 		        0,				// use default stack size
-		        AdbTouchThread,	// thread function name
+		        AdbExecThread,	// thread function name
 		        device.PTouchThreadParam,	// argument to thread function
 		        0,				// use default creation flags
 		        NULL);			// returns the thread identifier
@@ -1332,27 +1406,6 @@ void CAdbControllerDlg::BuildAdbDevice()
 	}
 
 }
-
-
-
-#define PRJ_DEVICE 			_T("device ")
-#define PRJ_DEVICE_SERIAL 	_T("serial")
-#define PRJ_TOUCH_EVT 		_T("touch_evt")
-#define PRJ_SYNC_CHECK 		_T("sync_chk")
-
-#define PRJ_MAIN 			_T("main")
-#define PRJ_CMD_LINE		_T("cmd_line")
-
-#define PRJ_SYNC_MOVE 			_T("sync_move")
-#define PRJ_CENTER_X 			_T("center_x")
-#define PRJ_CENTER_Y 			_T("center_y")
-#define PRJ_MOVE_LEN 			_T("move_length")
-#define PRJ_MOVE_DURATION 		_T("move_duration")
-#define PRJ_SYNC_MOVE_MASTER	_T("move_master")
-#define PRJ_SYNC_MOVE_SLAVE1	_T("move_slave1")
-#define PRJ_SYNC_MOVE_SLAVE2	_T("move_sllave2")
-#define PRJ_SYNC_MOVE_SLAVE3	_T("move_sllave3")
-#define PRJ_SYNC_MOVE_SLAVE4	_T("move_sllave4")
 
 
 
@@ -1491,26 +1544,13 @@ void CAdbControllerDlg::SaveProfile()
 }
 
 
-
-void CAdbControllerDlg::OnBnClickedCmdOutClear()
-{
-	CEdit* edit = (CEdit*)GetDlgItem(IDC_OUTPUT);
-	edit->SetWindowText(_T(""));
-}
-
-void CAdbControllerDlg::OnBnClickedStatusOutClear()
-{
-	CEdit* edit = (CEdit*)GetDlgItem(IDC_STATUS_OUTPUT);
-	edit->SetWindowText(_T(""));
-}
-
 int CAdbControllerDlg::FindDeviceIndex(UINT nControlId, int member)
 {
 
 	for(int idx = DEV_MASTER; idx < TOTAL_DEVICE; idx++) {
 
 		UINT nCtrlId = *(UINT *)((char *)&G_DEVICE_CONTROL_MAP[idx] + member);
-		
+
 		if(nCtrlId == nControlId) {
 			return idx;
 		}
@@ -1532,33 +1572,11 @@ void CAdbControllerDlg::EnableDeviceControl(BOOL bEnable, int member)
 void CAdbControllerDlg::CheckDeviceControl(int nCheck, int member)
 {
 	for(int idx = DEV_MASTER; idx < TOTAL_DEVICE; idx++) {
-
 		UINT nCtrlId = *(UINT *)((char *)&G_DEVICE_CONTROL_MAP[idx] + member);
-		//CButton* button = GetDlgItem(nCtrlId);
-		
 		CButton* button = (CButton*)GetDlgItem(nCtrlId);
+
 		if (button != NULL) button->SetCheck(nCheck);
 	}
-}
-
-
-
-
-void CAdbControllerDlg::OnBnClickedConnectDevices()
-{
-	OnBreak();
-	
-	for(int idx = DEV_MASTER; idx < TOTAL_DEVICE; idx++) {
-		CString serial;
-		GetDlgItem(G_DEVICE_CONTROL_MAP[idx].nEditID_Device)->GetWindowText(serial);
-		CString cmd;
-		cmd.Format(_T("adb connect %s"), serial);
-		ExecCmdSimple(cmd);
-	}
-
-	m_wCommand->SetWindowText(_T("adb devices"));
-	OnRun();
-	
 }
 
 

@@ -7,17 +7,26 @@
 
 
 typedef struct _TouchThreadData {
+	CEdit*	wndStatus;
     CString	Serial;
-    CString	TouchEvt;
-	BOOL	bSync;
 	
-	HANDLE	hTouchEvent;
 	HANDLE	hExitEvent;
 	HANDLE	hExitFinishedEvent;
 
+
+	HANDLE	hTouchEvent;
+    CString	TouchEvt;
+	BOOL	bSync;
 	CPoint 	ptTapXY;
 
+
+	HANDLE	hMoveEvent;
 	BOOL	bMoveSync;
+	CPoint  ptStartXY;
+	CPoint 	ptEndXY;
+	UINT 	nMoveDuration;
+
+	
 } TouchThreadData, *PTouchThreadData;
 
 
@@ -139,4 +148,5 @@ private:
 public:
 
 
+	afx_msg void OnBnClickedDisconnectDevices();
 };
