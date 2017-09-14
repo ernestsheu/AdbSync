@@ -149,4 +149,5 @@ public:
 
 
 	afx_msg void OnBnClickedDisconnectDevices();
+	afx_msg void OnBnClickedMoveDegree();
 };

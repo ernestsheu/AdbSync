@@ -57,6 +57,8 @@
 #define IDC_DISCONNECT_DEVICES          1042
 #define IDC_CENTER_X                    1043
 #define IDC_CENTER_Y                    1044
+#define IDC_S4_PLAY_BTN2                1045
+#define IDC_MOVE_DEGREE                 1045
 #define IDC_MOVE_OFFSET                 1046
 #define IDC_MOVE_DURATION               1047
 #define IDC_MOVE_UP                     1048
@@ -80,6 +82,7 @@
 #define IDC_SYNC_MOVE_SLAVE_2           1066
 #define IDC_SYNC_MOVE_SLAVE_3           1067
 #define IDC_SYNC_MOVE_SLAVE_4           1068
+#define IDC_DEGREE                      1069
 
 // Next default values for new objects
 // 

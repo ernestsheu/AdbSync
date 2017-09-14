@@ -467,6 +467,7 @@ BEGIN_MESSAGE_MAP(CAdbControllerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_STATUS_OUT_CLEAR, &CAdbControllerDlg::OnBnClickedStatusOutClear)
 	ON_BN_CLICKED(IDC_CONNECT_DEVICES, &CAdbControllerDlg::OnBnClickedConnectDevices)
 	ON_BN_CLICKED(IDC_DISCONNECT_DEVICES, &CAdbControllerDlg::OnBnClickedDisconnectDevices)
+	ON_BN_CLICKED(IDC_MOVE_DEGREE, &CAdbControllerDlg::OnBnClickedMoveDegree)
 END_MESSAGE_MAP()
 
 
@@ -1180,12 +1181,15 @@ void CAdbControllerDlg::OnCtrlRgn_Sync_Change(UINT nID)
 	m_bNeedUpdateMoveSync = TRUE;
 }
 
+#ifndef M_PI
+#define M_PI       3.14159265358979323846
+#endif
 
-#define R_X( r, degree) ((double)r*cos(degree))
-#define R_Y( r, degree) ((double)r*sin(degree))
+#define R_X( r, degree) ((double)r*cos((double)degree*M_PI/180.0f))
+#define R_Y( r, degree) ((double)r*sin((double)degree*M_PI/180.0f))
 
 #define Joy_X(center_x, r, degree) (center_x + (int)R_X(r, degree))
-#define Joy_Y(center_y, r, degree) (center_y + (int)R_Y(r, degree))
+#define Joy_Y(center_y, r, degree) (center_y - (int)R_Y(r, degree))
 
 
 void CAdbControllerDlg::OnCtrlRgn_Move_Event(UINT nID)
@@ -1226,7 +1230,7 @@ void CAdbControllerDlg::OnCtrlRgn_Move_Event(UINT nID)
 	else if (nID == IDC_MOVE_RIGHT_UP_UP) 	degree = 68;
 	else if (nID == IDC_MOVE_RIGHT_UP_DW) 	degree = 23;
 	else if (nID == IDC_MOVE_RIGHT_DW) 		degree = 315;
-	else if (nID == IDC_MOVE_RIGHT_DW_UP)	degree = 378;
+	else if (nID == IDC_MOVE_RIGHT_DW_UP)	degree = 348;
 	else if (nID == IDC_MOVE_RIGHT_DW_DW)	degree = 293;
 	else if (nID == IDC_MOVE_DOWN)			degree = 270;
 	else return;
@@ -1245,10 +1249,50 @@ void CAdbControllerDlg::OnCtrlRgn_Move_Event(UINT nID)
 
 		SetEvent(device.PTouchThreadParam->hMoveEvent);
 	}
+}
 
 
+
+
+void CAdbControllerDlg::OnBnClickedMoveDegree()
+{
+	CEdit* editor;
+	CString text;
+	int degree = 0;
+	CPoint pt2;
+	
+	if(m_bNeedUpdateMoveSync) {
+		UpdateMove();
+		m_bNeedUpdateMoveSync = FALSE;
+	}
+	
+	editor = (CEdit*)GetDlgItem(IDC_DEGREE);
+	editor->GetWindowText(text);
+	degree = _wtoi((LPCTSTR)text);
+
+	pt2.x = Joy_X( m_ptMove.x, m_MoveLength, degree);
+	pt2.y = Joy_Y( m_ptMove.y, m_MoveLength, degree);
+
+	
+	OutputString( m_wStatus, _T("cos %f, sin %f"), cos(degree), sin(degree));
+	OutputString( m_wStatus, _T("R_X %d, R_Y %d"), R_X( m_MoveLength, degree), R_Y( m_MoveLength, degree));
+
+
+	
+	POSITION pos = m_SyncDevices.GetHeadPosition();
+
+	while(pos) {
+		CAdbDevice device = m_SyncDevices.GetNext(pos);
+		// input swipe 150 565 150 450 10000
+		device.PTouchThreadParam->ptStartXY = m_ptMove;
+		device.PTouchThreadParam->ptEndXY = pt2;
+		device.PTouchThreadParam->nMoveDuration = m_MoveDuration;
+
+		SetEvent(device.PTouchThreadParam->hMoveEvent);
+	}
 
 }
+
 
 void CAdbControllerDlg::OnTouchSyncReceived(LPCTSTR pszText)
 {
