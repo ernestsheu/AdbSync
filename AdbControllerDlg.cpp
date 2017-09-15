@@ -43,6 +43,8 @@ typedef struct _DEVICE_CONTROL_IDS {
 	UINT nBtnD_FindDevice;
 	UINT nBtnD_DetectTouchEvt;
 	UINT nBtnD_MoveSync;
+	UINT nBtnD_Play_Script;
+	UINT nEditD_Script_File;
 } DEVICE_CONTROL_IDS;
 
 
@@ -54,7 +56,9 @@ static DEVICE_CONTROL_IDS G_DEVICE_CONTROL_MAP[TOTAL_DEVICE] = {
 		IDC_M_SYNC_CHK,
 		IDC_M_DEVICE_BTN,
 		IDC_M_TOUCH_EVT_BTN,
-		IDC_SYNC_MOVE_MASTER
+		IDC_SYNC_MOVE_MASTER, 
+		IDC_M_PLAY_SCRIPT_BTN,
+		IDC_M_SCRIPT_FILE
 	},
 	// Slave 1
 	{
@@ -63,7 +67,9 @@ static DEVICE_CONTROL_IDS G_DEVICE_CONTROL_MAP[TOTAL_DEVICE] = {
 		IDC_S1_SYNC_CHK,
 		IDC_S1_DEVICE_BTN,
 		IDC_S1_TOUCH_EVT_BTN,
-		IDC_SYNC_MOVE_SLAVE_1
+		IDC_SYNC_MOVE_SLAVE_1, 
+		IDC_S1_PLAY_SCRIPT_BTN,
+		IDC_S1_SCRIPT_FILE
 	},
 	// Slave 2
 	{
@@ -72,7 +78,9 @@ static DEVICE_CONTROL_IDS G_DEVICE_CONTROL_MAP[TOTAL_DEVICE] = {
 		IDC_S2_SYNC_CHK,
 		IDC_S2_DEVICE_BTN,
 		IDC_S2_TOUCH_EVT_BTN,
-		IDC_SYNC_MOVE_SLAVE_2
+		IDC_SYNC_MOVE_SLAVE_2, 
+		IDC_S1_PLAY_SCRIPT_BTN,
+		IDC_S1_SCRIPT_FILE
 	},
 	// Slave 3
 	{
@@ -81,7 +89,9 @@ static DEVICE_CONTROL_IDS G_DEVICE_CONTROL_MAP[TOTAL_DEVICE] = {
 		IDC_S3_SYNC_CHK,
 		IDC_S3_DEVICE_BTN,
 		IDC_S3_TOUCH_EVT_BTN,
-		IDC_SYNC_MOVE_SLAVE_3
+		IDC_SYNC_MOVE_SLAVE_3, 
+		IDC_S2_PLAY_SCRIPT_BTN,
+		IDC_S2_SCRIPT_FILE
 	},
 	// Slave 4
 	{
@@ -90,7 +100,9 @@ static DEVICE_CONTROL_IDS G_DEVICE_CONTROL_MAP[TOTAL_DEVICE] = {
 		IDC_S4_SYNC_CHK,
 		IDC_S4_DEVICE_BTN,
 		IDC_S4_TOUCH_EVT_BTN,
-		IDC_SYNC_MOVE_SLAVE_4
+		IDC_SYNC_MOVE_SLAVE_4, 
+		IDC_S2_PLAY_SCRIPT_BTN,
+		IDC_S2_SCRIPT_FILE
 	}
 };
 
@@ -287,11 +299,11 @@ BOOL ExecCmdSimple (
 DWORD
 AdbExecThread(LPVOID lpParam)
 {
-	PTouchThreadData pDevice;
+	PAdbThreadData pDevice;
 	HANDLE ghEvents[3];
 	DWORD dwEvent;
 
-	pDevice = (PTouchThreadData)lpParam;
+	pDevice = (PAdbThreadData)lpParam;
 
 	ghEvents[0] = pDevice->hTouchEvent;
 	ghEvents[1] = pDevice->hMoveEvent;
@@ -368,7 +380,6 @@ AdbExecThread(LPVOID lpParam)
 		}
 	}
 
-	// Close event handles
 
 exit:
 	SetEvent(pDevice->hExitFinishedEvent);
@@ -457,8 +468,7 @@ BEGIN_MESSAGE_MAP(CAdbControllerDlg, CDialogEx)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_M_SYNC_CHK, IDC_S4_SYNC_CHK, &CAdbControllerDlg::OnCtrlRgn_Sync_Checkbox)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_M_DEVICE_BTN, IDC_S4_DEVICE_BTN, &CAdbControllerDlg::OnCtrlRgn_Connect_Device)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_M_TOUCH_EVT_BTN, IDC_S4_TOUCH_EVT_BTN, &CAdbControllerDlg::OnCtrlRgn_Detect_Touch_Event)
-	ON_CONTROL_RANGE(BN_CLICKED, IDC_M_PLAY_BTN, IDC_S4_PLAY_BTN, &CAdbControllerDlg::OnCtrlRgn_Play_Event)
-	ON_CONTROL_RANGE(BN_CLICKED, IDC_M_STOP_BTN, IDC_S4_STOP_BTN, &CAdbControllerDlg::OnCtrlRgn_Stop_Event)
+	ON_CONTROL_RANGE(BN_CLICKED, IDC_M_PLAY_SCRIPT_BTN, IDC_S4_PLAY_SCRIPT_BTN, &CAdbControllerDlg::OnCtrlRgn_Play_Event)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_SYNC_MOVE_MASTER, IDC_SYNC_MOVE_SLAVE_4, &CAdbControllerDlg::OnCtrlRgn_Sync_Change)
 	ON_CONTROL_RANGE(EN_CHANGE, IDC_CENTER_X, IDC_MOVE_DURATION, &CAdbControllerDlg::OnCtrlRgn_Sync_Change)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_MOVE_UP, IDC_MOVE_DOWN, &CAdbControllerDlg::OnCtrlRgn_Move_Event)
@@ -490,6 +500,14 @@ END_MESSAGE_MAP()
 #define PRJ_SYNC_MOVE_SLAVE2	_T("move_sllave2")
 #define PRJ_SYNC_MOVE_SLAVE3	_T("move_sllave3")
 #define PRJ_SYNC_MOVE_SLAVE4	_T("move_sllave4")
+
+#define PRJ_SCRIPT_FILE 		_T("script_file")
+
+#define PRJ_MASTER				_T("master")
+#define PRJ_SLAVE1				_T("sliave1")
+#define PRJ_SLAVE2				_T("sliave2")
+#define PRJ_SLAVE3				_T("sliave3")
+#define PRJ_SLAVE4				_T("sliave4")
 
 
 
@@ -583,14 +601,14 @@ void CAdbControllerDlg::OnDestroy()
 
 	while(pos) {
 		CAdbDevice device = m_SyncDevices.GetNext(pos);
-		SetEvent(device.PTouchThreadParam->hExitEvent);
-		WaitForSingleObject(device.PTouchThreadParam->hExitFinishedEvent, 3000);
-		CloseHandle(device.PTouchThreadParam->hTouchEvent);
-		CloseHandle(device.PTouchThreadParam->hExitEvent);
-		CloseHandle(device.PTouchThreadParam->hExitFinishedEvent);
-		CloseHandle(device.PTouchThreadParam->hMoveEvent);
+		SetEvent(device.PAdbThreadParam->hExitEvent);
+		WaitForSingleObject(device.PAdbThreadParam->hExitFinishedEvent, 3000);
+		CloseHandle(device.PAdbThreadParam->hTouchEvent);
+		CloseHandle(device.PAdbThreadParam->hExitEvent);
+		CloseHandle(device.PAdbThreadParam->hExitFinishedEvent);
+		CloseHandle(device.PAdbThreadParam->hMoveEvent);
 		CloseHandle(device.hThread);
-		delete device.PTouchThreadParam;
+		delete device.PAdbThreadParam;
 	}
 
 }
@@ -802,7 +820,7 @@ void CAdbControllerDlg::OnSyncOneTouchToSend(CString data)
 	//OutputDebugString(data + _T("\n"));
 
 	if(data.GetLength() != TOUCH_DATA_LENGTH) {
-		OutputDebugString(_T("Invalid touch data\n"));
+		//OutputDebugString(_T("Invalid touch data\n"));
 		return;
 	}
 
@@ -811,7 +829,7 @@ void CAdbControllerDlg::OnSyncOneTouchToSend(CString data)
 	SplitString(data, _T(' '), touch_data);
 
 	if(touch_data.GetCount() != 3) {
-		OutputDebugString(_T("Invalid touch data field\n"));
+		//OutputDebugString(_T("Invalid touch data field\n"));
 		return;
 	}
 
@@ -852,14 +870,15 @@ void CAdbControllerDlg::OnSyncOneTouchToSend(CString data)
 	else {
 		return;
 	}
-
+	
+	OutputString( m_wStatus, _T("Touch %d %d"), m_TapXY.x, m_TapXY.y);
 
 	list_pos = m_SyncDevices.GetHeadPosition();
 
 	while(list_pos) {
 		CAdbDevice device = m_SyncDevices.GetNext(list_pos);
-		device.PTouchThreadParam->ptTapXY = m_TapXY;
-		SetEvent(device.PTouchThreadParam->hTouchEvent);
+		device.PAdbThreadParam->ptTapXY = m_TapXY;
+		SetEvent(device.PAdbThreadParam->hTouchEvent);
 	}
 
 }
@@ -1164,14 +1183,20 @@ void CAdbControllerDlg::OnCtrlRgn_Play_Event(UINT nID)
 	CString temp;
 	temp.Format(_T("OnCtrlRgn_Play_Event(%d)\n"), nID);
 	OutputDebugString(temp);
+
+	int nDeviceIdx = FindDeviceIndex( nID, offsetof(struct _DEVICE_CONTROL_IDS, nBtnD_Play_Script));
+	if(nDeviceIdx == -1) {
+		return;
+	}
+
+	CString text;
+	GetDlgItem(G_DEVICE_CONTROL_MAP[nDeviceIdx].nEditD_Script_File)->GetWindowText(text);
+	
+	int retval = ::_tsystem(text);
+	OutputString( m_wStatus, _T("Play script[%s], ret:%d"), text, retval);
+	
 }
 
-void CAdbControllerDlg::OnCtrlRgn_Stop_Event(UINT nID)
-{
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Stop_Event(%d)\n"), nID);
-	OutputDebugString(temp);
-}
 
 void CAdbControllerDlg::OnCtrlRgn_Sync_Change(UINT nID)
 {
@@ -1243,11 +1268,11 @@ void CAdbControllerDlg::OnCtrlRgn_Move_Event(UINT nID)
 	while(pos) {
 		CAdbDevice device = m_SyncDevices.GetNext(pos);
 		// input swipe 150 565 150 450 10000
-		device.PTouchThreadParam->ptStartXY = m_ptMove;
-		device.PTouchThreadParam->ptEndXY = pt2;
-		device.PTouchThreadParam->nMoveDuration = m_MoveDuration;
+		device.PAdbThreadParam->ptStartXY = m_ptMove;
+		device.PAdbThreadParam->ptEndXY = pt2;
+		device.PAdbThreadParam->nMoveDuration = m_MoveDuration;
 
-		SetEvent(device.PTouchThreadParam->hMoveEvent);
+		SetEvent(device.PAdbThreadParam->hMoveEvent);
 	}
 }
 
@@ -1284,11 +1309,11 @@ void CAdbControllerDlg::OnBnClickedMoveDegree()
 	while(pos) {
 		CAdbDevice device = m_SyncDevices.GetNext(pos);
 		// input swipe 150 565 150 450 10000
-		device.PTouchThreadParam->ptStartXY = m_ptMove;
-		device.PTouchThreadParam->ptEndXY = pt2;
-		device.PTouchThreadParam->nMoveDuration = m_MoveDuration;
+		device.PAdbThreadParam->ptStartXY = m_ptMove;
+		device.PAdbThreadParam->ptEndXY = pt2;
+		device.PAdbThreadParam->nMoveDuration = m_MoveDuration;
 
-		SetEvent(device.PTouchThreadParam->hMoveEvent);
+		SetEvent(device.PAdbThreadParam->hMoveEvent);
 	}
 
 }
@@ -1350,9 +1375,9 @@ void CAdbControllerDlg::UpdateSyncList()
 		CEdit* editorDevice = (CEdit*)GetDlgItem(G_DEVICE_CONTROL_MAP[device.DeviceIdx].nEditID_Device);
 		CEdit* editorTouchEvt = (CEdit*)GetDlgItem(G_DEVICE_CONTROL_MAP[device.DeviceIdx].nEditID_TouchEvt);
 
-		editorDevice->GetWindowText(device.PTouchThreadParam->Serial);
-		editorTouchEvt->GetWindowText(device.PTouchThreadParam->TouchEvt);
-		device.PTouchThreadParam->bSync = checkBox->GetCheck() > 0;
+		editorDevice->GetWindowText(device.PAdbThreadParam->Serial);
+		editorTouchEvt->GetWindowText(device.PAdbThreadParam->TouchEvt);
+		device.PAdbThreadParam->bSync = checkBox->GetCheck() > 0;
 		//m_SyncDevices.SetAt(targetPos, device);
 		//targetPos = pos;
 	}
@@ -1367,7 +1392,7 @@ void CAdbControllerDlg::UpdateMove()
 	while(pos) {
 		CAdbDevice device = m_SyncDevices.GetNext(pos);
 		CButton* checkBox = (CButton*)GetDlgItem(G_DEVICE_CONTROL_MAP[device.DeviceIdx].nBtnD_MoveSync);
-		device.PTouchThreadParam->bMoveSync = checkBox->GetCheck() > 0;
+		device.PAdbThreadParam->bMoveSync = checkBox->GetCheck() > 0;
 	}
 
 	CEdit* editor;
@@ -1400,33 +1425,33 @@ void CAdbControllerDlg::BuildAdbDevice()
 		CEdit* editorTouchEvt = (CEdit*)GetDlgItem(G_DEVICE_CONTROL_MAP[idx].nEditID_TouchEvt);
 
 		CAdbDevice device;
-		device.PTouchThreadParam = new TouchThreadData;
-		editorDevice->GetWindowText(device.PTouchThreadParam->Serial);
-		editorTouchEvt->GetWindowText(device.PTouchThreadParam->TouchEvt);
-		device.PTouchThreadParam->wndStatus = m_wStatus;
-		device.PTouchThreadParam->bSync = checkBox->GetCheck() > 0;
-		device.PTouchThreadParam->hExitEvent =
+		device.PAdbThreadParam = new AdbThreadData;
+		editorDevice->GetWindowText(device.PAdbThreadParam->Serial);
+		editorTouchEvt->GetWindowText(device.PAdbThreadParam->TouchEvt);
+		device.PAdbThreadParam->wndStatus = m_wStatus;
+		device.PAdbThreadParam->bSync = checkBox->GetCheck() > 0;
+		device.PAdbThreadParam->hExitEvent =
 		    CreateEvent(
 		        NULL,	// default security attributes
 		        FALSE,	// manual-reset event
 		        FALSE,	// initial state is nonsignaled
 		        NULL  	// object name
 		    );
-		device.PTouchThreadParam->hTouchEvent =
+		device.PAdbThreadParam->hTouchEvent =
 		    CreateEvent(
 		        NULL,	// default security attributes
 		        FALSE,	// manual-reset event
 		        FALSE,	// initial state is nonsignaled
 		        NULL  	// object name
 		    );
-		device.PTouchThreadParam->hExitFinishedEvent =
+		device.PAdbThreadParam->hExitFinishedEvent =
 		    CreateEvent(
 		        NULL,	// default security attributes
 		        FALSE,	// manual-reset event
 		        FALSE,	// initial state is nonsignaled
 		        NULL  	// object name
 		    );
-		device.PTouchThreadParam->hMoveEvent =
+		device.PAdbThreadParam->hMoveEvent =
 		    CreateEvent(
 		        NULL,	// default security attributes
 		        FALSE,	// manual-reset event
@@ -1440,7 +1465,7 @@ void CAdbControllerDlg::BuildAdbDevice()
 		        NULL,			// default security attributes
 		        0,				// use default stack size
 		        AdbExecThread,	// thread function name
-		        device.PTouchThreadParam,	// argument to thread function
+		        device.PAdbThreadParam,	// argument to thread function
 		        0,				// use default creation flags
 		        NULL);			// returns the thread identifier
 
@@ -1499,19 +1524,41 @@ void CAdbControllerDlg::LoadProfile()
 	editor->SetWindowText(pApp->GetProfileString(PRJ_SYNC_MOVE, PRJ_MOVE_DURATION));
 
 	checkBox = (CButton*)GetDlgItem(IDC_SYNC_MOVE_MASTER);
-	checkBox->SetCheck(pApp->GetProfileInt(PRJ_SYNC_MOVE, PRJ_SYNC_MOVE_MASTER, 0));
+	checkBox->SetCheck(pApp->GetProfileInt(PRJ_SYNC_MOVE, PRJ_MASTER, 0));
 
 	checkBox = (CButton*)GetDlgItem(IDC_SYNC_MOVE_SLAVE_1);
-	checkBox->SetCheck(pApp->GetProfileInt(PRJ_SYNC_MOVE, PRJ_SYNC_MOVE_SLAVE1, 0));
+	checkBox->SetCheck(pApp->GetProfileInt(PRJ_SYNC_MOVE, PRJ_SLAVE1, 0));
 
 	checkBox = (CButton*)GetDlgItem(IDC_SYNC_MOVE_SLAVE_2);
-	checkBox->SetCheck(pApp->GetProfileInt(PRJ_SYNC_MOVE, PRJ_SYNC_MOVE_SLAVE2, 0));
+	checkBox->SetCheck(pApp->GetProfileInt(PRJ_SYNC_MOVE, PRJ_SLAVE2, 0));
 
 	checkBox = (CButton*)GetDlgItem(IDC_SYNC_MOVE_SLAVE_3);
-	checkBox->SetCheck(pApp->GetProfileInt(PRJ_SYNC_MOVE, PRJ_SYNC_MOVE_SLAVE3, 0));
+	checkBox->SetCheck(pApp->GetProfileInt(PRJ_SYNC_MOVE, PRJ_SLAVE3, 0));
 
 	checkBox = (CButton*)GetDlgItem(IDC_SYNC_MOVE_SLAVE_4);
-	checkBox->SetCheck(pApp->GetProfileInt(PRJ_SYNC_MOVE, PRJ_SYNC_MOVE_SLAVE4, 0));
+	checkBox->SetCheck(pApp->GetProfileInt(PRJ_SYNC_MOVE, PRJ_SLAVE4, 0));
+
+	/*
+		Script file
+	*/
+	editor = (CEdit*)GetDlgItem(IDC_M_SCRIPT_FILE);
+	editor->SetWindowText(pApp->GetProfileString(PRJ_SCRIPT_FILE, PRJ_MASTER));
+	
+	editor = (CEdit*)GetDlgItem(IDC_S1_SCRIPT_FILE);
+	editor->SetWindowText(pApp->GetProfileString(PRJ_SCRIPT_FILE, PRJ_SLAVE1));
+	
+	editor = (CEdit*)GetDlgItem(IDC_S2_SCRIPT_FILE);
+	editor->SetWindowText(pApp->GetProfileString(PRJ_SCRIPT_FILE, PRJ_SLAVE2));
+	
+	editor = (CEdit*)GetDlgItem(IDC_S3_SCRIPT_FILE);
+	editor->SetWindowText(pApp->GetProfileString(PRJ_SCRIPT_FILE, PRJ_SLAVE3));
+	
+	editor = (CEdit*)GetDlgItem(IDC_S4_SCRIPT_FILE);
+	editor->SetWindowText(pApp->GetProfileString(PRJ_SCRIPT_FILE, PRJ_SLAVE4));
+
+
+
+
 
 }
 
@@ -1569,19 +1616,44 @@ void CAdbControllerDlg::SaveProfile()
 	pApp->WriteProfileString( PRJ_SYNC_MOVE, PRJ_MOVE_DURATION, text);
 
 	checkBox = (CButton*)GetDlgItem(IDC_SYNC_MOVE_MASTER);
-	pApp->WriteProfileInt(PRJ_SYNC_MOVE, PRJ_SYNC_MOVE_MASTER, checkBox->GetCheck());
+	pApp->WriteProfileInt(PRJ_SYNC_MOVE, PRJ_MASTER, checkBox->GetCheck());
 
 	checkBox = (CButton*)GetDlgItem(IDC_SYNC_MOVE_SLAVE_1);
-	pApp->WriteProfileInt(PRJ_SYNC_MOVE, PRJ_SYNC_MOVE_SLAVE1, checkBox->GetCheck());
+	pApp->WriteProfileInt(PRJ_SYNC_MOVE, PRJ_SLAVE1, checkBox->GetCheck());
 
 	checkBox = (CButton*)GetDlgItem(IDC_SYNC_MOVE_SLAVE_2);
-	pApp->WriteProfileInt(PRJ_SYNC_MOVE, PRJ_SYNC_MOVE_SLAVE2, checkBox->GetCheck());
+	pApp->WriteProfileInt(PRJ_SYNC_MOVE, PRJ_SLAVE2, checkBox->GetCheck());
 
 	checkBox = (CButton*)GetDlgItem(IDC_SYNC_MOVE_SLAVE_3);
-	pApp->WriteProfileInt(PRJ_SYNC_MOVE, PRJ_SYNC_MOVE_SLAVE3, checkBox->GetCheck());
+	pApp->WriteProfileInt(PRJ_SYNC_MOVE, PRJ_SLAVE3, checkBox->GetCheck());
 
 	checkBox = (CButton*)GetDlgItem(IDC_SYNC_MOVE_SLAVE_4);
-	pApp->WriteProfileInt(PRJ_SYNC_MOVE, PRJ_SYNC_MOVE_SLAVE4, checkBox->GetCheck());
+	pApp->WriteProfileInt(PRJ_SYNC_MOVE, PRJ_SLAVE4, checkBox->GetCheck());
+
+	/*
+		Script file
+	*/
+	editor = (CEdit*)GetDlgItem(IDC_M_SCRIPT_FILE);
+	editor->GetWindowText(text);
+	pApp->WriteProfileString( PRJ_SCRIPT_FILE, PRJ_MASTER, text);
+	
+	editor = (CEdit*)GetDlgItem(IDC_S1_SCRIPT_FILE);
+	editor->GetWindowText(text);
+	pApp->WriteProfileString( PRJ_SCRIPT_FILE, PRJ_SLAVE1, text);
+	
+	editor = (CEdit*)GetDlgItem(IDC_S2_SCRIPT_FILE);
+	editor->GetWindowText(text);
+	pApp->WriteProfileString( PRJ_SCRIPT_FILE, PRJ_SLAVE2, text);
+	
+	editor = (CEdit*)GetDlgItem(IDC_S3_SCRIPT_FILE);
+	editor->GetWindowText(text);
+	pApp->WriteProfileString( PRJ_SCRIPT_FILE, PRJ_SLAVE3, text);
+	
+	editor = (CEdit*)GetDlgItem(IDC_S4_SCRIPT_FILE);
+	editor->GetWindowText(text);
+	pApp->WriteProfileString( PRJ_SCRIPT_FILE, PRJ_SLAVE4, text);
+
+
 
 }
 

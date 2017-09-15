@@ -41,24 +41,21 @@
 #define IDC_CMD_OUT_CLEAR               1028
 #define IDC_STATUS_OUT_CLEAR            1029
 #define IDC_STATUS_OUTPUT               1030
-#define IDC_M_PLAY_BTN                  1031
-#define IDC_S1_PLAY_BTN                 1032
-#define IDC_S2_PLAY_BTN                 1033
-#define IDC_S3_PLAY_BTN                 1034
-#define IDC_S4_PLAY_BTN                 1035
-#define IDC_M_STOP_BTN                  1036
-#define IDC_S1_STOP_BTN                 1037
-#define IDC_S2_STOP_BTN                 1038
-#define IDC_S3_STOP_BTN                 1039
-#define IDC_S4_STOP_BTN                 1040
-#define IDC_S3_DEVICE_BTN2              1041
+#define IDC_M_PLAY_SCRIPT_BTN           1031
+#define IDC_S1_PLAY_SCRIPT_BTN          1032
+#define IDC_S2_PLAY_SCRIPT_BTN          1033
+#define IDC_S3_PLAY_SCRIPT_BTN          1034
+#define IDC_S4_PLAY_SCRIPT_BTN          1035
+#define IDC_M_SCRIPT_FILE               1036
+#define IDC_S1_SCRIPT_FILE              1037
+#define IDC_S2_SCRIPT_FILE              1038
+#define IDC_S3_SCRIPT_FILE              1039
+#define IDC_S4_SCRIPT_FILE              1040
 #define IDC_CONNECT_DEVICES             1041
 #define IDC_CONNECT_DEVICES2            1042
 #define IDC_DISCONNECT_DEVICES          1042
 #define IDC_CENTER_X                    1043
 #define IDC_CENTER_Y                    1044
-#define IDC_S4_PLAY_BTN2                1045
-#define IDC_MOVE_DEGREE                 1045
 #define IDC_MOVE_OFFSET                 1046
 #define IDC_MOVE_DURATION               1047
 #define IDC_MOVE_UP                     1048
@@ -83,6 +80,7 @@
 #define IDC_SYNC_MOVE_SLAVE_3           1067
 #define IDC_SYNC_MOVE_SLAVE_4           1068
 #define IDC_DEGREE                      1069
+#define IDC_MOVE_DEGREE                 1070
 
 // Next default values for new objects
 // 
@@ -90,7 +88,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        132
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1068
+#define _APS_NEXT_CONTROL_VALUE         1071
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

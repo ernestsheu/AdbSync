@@ -6,7 +6,7 @@
 
 
 
-typedef struct _TouchThreadData {
+typedef struct _AdbThreadData {
 	CEdit*	wndStatus;
     CString	Serial;
 	
@@ -25,9 +25,8 @@ typedef struct _TouchThreadData {
 	CPoint  ptStartXY;
 	CPoint 	ptEndXY;
 	UINT 	nMoveDuration;
-
 	
-} TouchThreadData, *PTouchThreadData;
+} AdbThreadData, *PAdbThreadData;
 
 
 
@@ -37,7 +36,7 @@ class CAdbDevice {
 public:
 	int			DeviceIdx;
 	HANDLE 		hThread;
-	PTouchThreadData	PTouchThreadParam;
+	PAdbThreadData	PAdbThreadParam;
 
 	
 public:
@@ -45,7 +44,7 @@ public:
 	{
 		DeviceIdx = device.DeviceIdx;
 		hThread = device.hThread;
-		PTouchThreadParam = device.PTouchThreadParam;
+		PAdbThreadParam = device.PAdbThreadParam;
 
 		return( *this );
 	}
@@ -91,7 +90,6 @@ protected:
 	afx_msg void OnCtrlRgn_Connect_Device(UINT nID);
 	afx_msg void OnCtrlRgn_Detect_Touch_Event(UINT nID);
 	afx_msg void OnCtrlRgn_Play_Event(UINT nID);
-	afx_msg void OnCtrlRgn_Stop_Event(UINT nID);
 	afx_msg void OnCtrlRgn_Sync_Change(UINT nID);
 	afx_msg void OnCtrlRgn_Move_Event(UINT nID);
 	afx_msg void OnBnClickedCmdOutClear();
@@ -99,6 +97,8 @@ protected:
 	afx_msg void OnBnClickedConnectDevices();
 	afx_msg void OnCtrlRgn_Device_Id_Changed(UINT nID);
 	afx_msg void OnCtrlRgn_Touch_Evt_Changed(UINT nID);
+	afx_msg void OnBnClickedDisconnectDevices();
+	afx_msg void OnBnClickedMoveDegree();
 	
 	DECLARE_MESSAGE_MAP()
 
@@ -148,6 +148,5 @@ private:
 public:
 
 
-	afx_msg void OnBnClickedDisconnectDevices();
-	afx_msg void OnBnClickedMoveDegree();
+	
 };
