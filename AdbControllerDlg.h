@@ -149,4 +149,5 @@ public:
 
 
 	
+	afx_msg void OnBnClickedMoveXy();
 };

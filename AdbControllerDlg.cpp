@@ -113,7 +113,6 @@ return: output found count
 */
 int SplitString(CString& content, TCHAR token, CStringList& outList)
 {
-
 	CString field;
 	int index = 0;
 
@@ -478,6 +477,7 @@ BEGIN_MESSAGE_MAP(CAdbControllerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CONNECT_DEVICES, &CAdbControllerDlg::OnBnClickedConnectDevices)
 	ON_BN_CLICKED(IDC_DISCONNECT_DEVICES, &CAdbControllerDlg::OnBnClickedDisconnectDevices)
 	ON_BN_CLICKED(IDC_MOVE_DEGREE, &CAdbControllerDlg::OnBnClickedMoveDegree)
+	ON_BN_CLICKED(IDC_MOVE_XY, &CAdbControllerDlg::OnBnClickedMoveXy)
 END_MESSAGE_MAP()
 
 
@@ -1277,8 +1277,6 @@ void CAdbControllerDlg::OnCtrlRgn_Move_Event(UINT nID)
 }
 
 
-
-
 void CAdbControllerDlg::OnBnClickedMoveDegree()
 {
 	CEdit* editor;
@@ -1317,6 +1315,38 @@ void CAdbControllerDlg::OnBnClickedMoveDegree()
 	}
 
 }
+
+void CAdbControllerDlg::OnBnClickedMoveXy()
+{
+	CEdit* editor;
+	CString text;
+	int degree = 0;
+	CPoint pt2;
+	
+	if(m_bNeedUpdateMoveSync) {
+		UpdateMove();
+		m_bNeedUpdateMoveSync = FALSE;
+	}
+	
+	editor = (CEdit*)GetDlgItem(IDC_POINT_X);
+	editor->GetWindowText(text);
+	pt2.x = _wtoi((LPCTSTR)text);
+
+	editor = (CEdit*)GetDlgItem(IDC_POINT_Y);
+	editor->GetWindowText(text);
+	pt2.y = _wtoi((LPCTSTR)text);
+	
+	OutputString( m_wStatus, _T("Touch %d %d"), m_TapXY.x, m_TapXY.y);
+	
+	POSITION pos = m_SyncDevices.GetHeadPosition();
+	while(pos) {
+		CAdbDevice device = m_SyncDevices.GetNext(pos);
+		device.PAdbThreadParam->ptTapXY = pt2;
+		SetEvent(device.PAdbThreadParam->hTouchEvent);
+	}
+
+}
+
 
 
 void CAdbControllerDlg::OnTouchSyncReceived(LPCTSTR pszText)
@@ -1692,6 +1722,7 @@ void CAdbControllerDlg::CheckDeviceControl(int nCheck, int member)
 		if (button != NULL) button->SetCheck(nCheck);
 	}
 }
+
 
 
 
