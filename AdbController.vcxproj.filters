@@ -39,6 +39,9 @@
     <ClInclude Include="MyconsolePipe.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="PackageDlg.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AdbControllerDlg.cpp">
@@ -48,6 +51,9 @@
       <Filter>原始程式檔</Filter>
     </ClCompile>
     <ClCompile Include="AdbController.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
+    <ClCompile Include="PackageDlg.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
   </ItemGroup>

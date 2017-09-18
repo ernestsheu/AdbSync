@@ -84,13 +84,58 @@
 #define IDC_DEGREE                      1069
 #define IDC_MOVE_DEGREE                 1070
 #define IDC_CENTER_Y2                   1071
-#define IDC_POINT_Y                     1071
-#define IDC_MOVE_XY                     1072
-#define IDC_PKG_START_X                 1072
+#define IDC_POINT_Y                     1072
+#define IDC_MOVE_XY                     1073
+#define IDC_PKG_START_X                 1074
 #define IDC_PKG_START_Y                 1075
 #define IDC_PKG_INV_W                   1076
-#define IDC_PKG_START_Y2                1077
 #define IDC_PKG_INV_H                   1077
+#define IDC_PACKAGE_BTN1                1078
+#define IDC_PACKAGE_BTN2                1079
+#define IDC_PACKAGE_BTN3                1080
+#define IDC_PACKAGE_BTN4                1081
+#define IDC_PACKAGE_BTN5                1082
+#define IDC_PACKAGE_BTN6                1083
+#define IDC_PACKAGE_BTN7                1084
+#define IDC_PACKAGE_BTN8                1085
+#define IDC_PACKAGE_BTN9                1086
+#define IDC_PACKAGE_BTN10               1087
+#define IDC_PACKAGE_BTN11               1088
+#define IDC_PACKAGE_BTN12               1089
+#define IDC_PACKAGE_BTN13               1090
+#define IDC_PACKAGE_BTN14               1091
+#define IDC_PACKAGE_BTN15               1092
+#define IDC_PACKAGE_BTN16               1093
+#define IDC_PACKAGE_BTN17               1094
+#define IDC_PACKAGE_BTN18               1095
+#define IDC_PACKAGE_BTN19               1096
+#define IDC_PACKAGE_BTN20               1097
+#define IDC_PACKAGE_CHECK1              1098
+#define IDC_PACKAGE_CHECK2              1099
+#define IDC_PACKAGE_CHECK3              1100
+#define IDC_PACKAGE_CHECK4              1101
+#define IDC_PACKAGE_CHECK5              1102
+#define IDC_PACKAGE_CHECK6              1103
+#define IDC_PACKAGE_CHECK7              1104
+#define IDC_PACKAGE_CHECK8              1105
+#define IDC_PACKAGE_CHECK9              1106
+#define IDC_PACKAGE_CHECK10             1107
+#define IDC_PACKAGE_CHECK11             1108
+#define IDC_PACKAGE_CHECK12             1109
+#define IDC_PACKAGE_CHECK13             1110
+#define IDC_PACKAGE_CHECK14             1111
+#define IDC_PACKAGE_CHECK15             1112
+#define IDC_PACKAGE_CHECK16             1113
+#define IDC_PACKAGE_CHECK17             1114
+#define IDC_PACKAGE_CHECK18             1115
+#define IDC_PACKAGE_CHECK19             1116
+#define IDC_PACKAGE_CHECK20             1117
+#define IDC_PACKAGE_TAKE_BTN            1118
+#define IDC_PACKAGE_M                   1119
+#define IDC_PACKAGE_S1                  1120
+#define IDC_PACKAGE_S2                  1121
+#define IDC_PACKAGE_S3                  1122
+#define IDC_PACKAGE_S4                  1123
 
 // Next default values for new objects
 // 
@@ -98,7 +143,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1073
+#define _APS_NEXT_CONTROL_VALUE         1124
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

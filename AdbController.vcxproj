@@ -193,6 +193,7 @@
     <ClInclude Include="AdbControllerDlg.h" />
     <ClInclude Include="ConsolePipe.h" />
     <ClInclude Include="MyconsolePipe.h" />
+    <ClInclude Include="PackageDlg.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -200,6 +201,7 @@
   <ItemGroup>
     <ClCompile Include="AdbController.cpp" />
     <ClCompile Include="AdbControllerDlg.cpp" />
+    <ClCompile Include="PackageDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
