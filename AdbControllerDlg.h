@@ -80,6 +80,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg LRESULT OnEndChildProcess(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnSyncTouch(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnCloseSystemExecThread(WPARAM wParam, LPARAM lParam);
 	afx_msg UINT OnGetDlgCode();
 	afx_msg void OnRun();
 	afx_msg void OnBreak();
@@ -99,6 +100,7 @@ protected:
 	afx_msg void OnCtrlRgn_Touch_Evt_Changed(UINT nID);
 	afx_msg void OnBnClickedDisconnectDevices();
 	afx_msg void OnBnClickedMoveDegree();
+	afx_msg void OnBnClickedMoveXy();
 	
 	DECLARE_MESSAGE_MAP()
 
@@ -118,6 +120,7 @@ private:
 	void CheckDeviceControl(int nCheck, int member);
 
 private:
+	CString m_sWorkingFolder;
 	CMyConsolePipe* m_pLastCommand;
 	
 	BOOL m_bIsWindowsNT;
@@ -149,5 +152,4 @@ public:
 
 
 	
-	afx_msg void OnBnClickedMoveXy();
 };

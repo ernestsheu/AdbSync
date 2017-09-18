@@ -10,6 +10,7 @@
 #define IDD_ADBCONTROLLER_DIALOG        102
 #define IDR_MAINFRAME                   128
 #define IDI_ICON1                       131
+#define IDD_PACKAGE_DIALOG              132
 #define IDC_REUSE                       1000
 #define IDC_COMMAND                     1001
 #define IDC_OUTPUT                      1002
@@ -85,14 +86,19 @@
 #define IDC_CENTER_Y2                   1071
 #define IDC_POINT_Y                     1071
 #define IDC_MOVE_XY                     1072
+#define IDC_PKG_START_X                 1072
+#define IDC_PKG_START_Y                 1075
+#define IDC_PKG_INV_W                   1076
+#define IDC_PKG_START_Y2                1077
+#define IDC_PKG_INV_H                   1077
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        132
+#define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1071
+#define _APS_NEXT_CONTROL_VALUE         1073
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

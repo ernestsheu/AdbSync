@@ -17,6 +17,7 @@
 
 
 #define UWM_SYNC_TOUPCH (WM_USER + 1) /* this could have been registered */
+#define UWM_CLOSE_SYS_EXEC_THREAD (WM_USER + 2) /* this could have been registered */
 #define TOUCH_EVENT_LENGTH 37
 #define TOUCH_DATA_LENGTH 18
 
@@ -389,6 +390,39 @@ exit:
 
 
 
+typedef struct _SystemExecParam {
+	CWnd*		wnd;
+	CEdit*		wStatus;
+	CButton*	btnPlay;
+	CString		cmdLine;
+
+	UINT	nNoityfCloseThreadEvent;
+	
+	HANDLE  hThread;
+	
+} SystemExecParam, *PSystemExecParam;
+
+
+DWORD
+SystemExecuteThread(LPVOID lpParam)
+{
+	PSystemExecParam pParam = (PSystemExecParam)lpParam;
+
+	pParam->btnPlay->EnableWindow(FALSE);
+
+
+
+	int retval = ::_tsystem(pParam->cmdLine);
+	OutputString( pParam->wStatus, _T("Play script[%s], ret:%d"), pParam->cmdLine, retval);
+
+	pParam->btnPlay->EnableWindow(TRUE);
+	pParam->wnd->PostMessage(pParam->nNoityfCloseThreadEvent, (WPARAM)pParam, 0);
+
+	return 0;
+}
+
+
+
 class CAboutDlg : public CDialogEx
 {
 public:
@@ -455,6 +489,8 @@ BEGIN_MESSAGE_MAP(CAdbControllerDlg, CDialogEx)
 
 	ON_MESSAGE(UWM_PIPEBROKEN, OnEndChildProcess)
 	ON_MESSAGE(UWM_SYNC_TOUPCH, OnSyncTouch)
+	ON_MESSAGE(UWM_CLOSE_SYS_EXEC_THREAD, OnCloseSystemExecThread)
+	
 
 	ON_BN_CLICKED(IDOK, &CAdbControllerDlg::OnRun)
 	ON_BN_CLICKED(IDC_BREAK, &CAdbControllerDlg::OnBreak)
@@ -589,6 +625,12 @@ BOOL CAdbControllerDlg::OnInitDialog()
 	OutputString(m_wStatus, _T("CCC"));
 	OutputString(m_wStatus, _T("x:%d, y:%d"), 100, 200);
 	*/
+		
+	TCHAR NPath[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, NPath);
+	m_sWorkingFolder = NPath;	
+	OutputString( m_wStatus, _T("Current Dir: %s"), m_sWorkingFolder);
+
 	return TRUE;
 }
 
@@ -802,6 +844,8 @@ void CAdbControllerDlg::OnSyncTouchToSend(CString data)
 }
 
 
+
+
 void CAdbControllerDlg::OnSyncOneTouchToSend(CString data)
 {
 	if(data.Find(_T(": 0003 0035")) == -1 && data.Find(_T(": 0003 0036")) == -1) {
@@ -942,6 +986,21 @@ LRESULT CAdbControllerDlg::OnSyncTouch(WPARAM wParam, LPARAM lParam)
 
 	return 0;
 }
+
+
+LRESULT CAdbControllerDlg::OnCloseSystemExecThread(WPARAM wParam, LPARAM lParam)
+{
+
+	PSystemExecParam pParam = (PSystemExecParam)wParam;
+	
+	// wait for thread exit.
+	Sleep(100);
+	CloseHandle(pParam->hThread);
+	delete pParam;
+	
+	return 0;
+}
+
 
 
 
@@ -1191,9 +1250,23 @@ void CAdbControllerDlg::OnCtrlRgn_Play_Event(UINT nID)
 
 	CString text;
 	GetDlgItem(G_DEVICE_CONTROL_MAP[nDeviceIdx].nEditD_Script_File)->GetWindowText(text);
+
+
+	PSystemExecParam pParam = new SystemExecParam;
 	
-	int retval = ::_tsystem(text);
-	OutputString( m_wStatus, _T("Play script[%s], ret:%d"), text, retval);
+	pParam->wnd = this;
+	pParam->wStatus = m_wStatus;
+	pParam->btnPlay = (CButton*)GetDlgItem(G_DEVICE_CONTROL_MAP[nDeviceIdx].nBtnD_Play_Script);
+	pParam->cmdLine = text;
+	pParam->nNoityfCloseThreadEvent = UWM_CLOSE_SYS_EXEC_THREAD;
+	pParam->hThread =
+		CreateThread(
+			NULL,					// default security attributes
+			0,						// use default stack size
+			SystemExecuteThread,	// thread function name
+			pParam, 				// argument to thread function
+			0,						// use default creation flags
+			NULL);					// returns the thread identifier
 	
 }
 
