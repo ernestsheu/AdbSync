@@ -9,7 +9,7 @@ class CPackageDlg : public CDialogEx
 	DECLARE_DYNAMIC(CPackageDlg)
 
 public:
-	CPackageDlg(CWnd* pParent, int nDeviceIdx, CString serial, UINT nNotifyCloseDlgEvent);   // 標準建構函式
+	CPackageDlg(CWnd* pParent, int nDeviceIdx, CString sSerial, UINT nNotifyCloseDlgEvent, CString sWorkFolder);   // 標準建構函式
 	virtual ~CPackageDlg();
 
 // 對話方塊資料
@@ -26,6 +26,8 @@ private:
 	void GetPackagePoint(int pkdID, CPoint& outXY);
 	int FindPackageId(UINT nControlId, int member);
 	void UpdateParameter();
+	void LoadProfile();
+	void SaveProfile();
 
 
 private:
@@ -40,10 +42,13 @@ private:
 	int m_nDeviceIdx;
 	CWnd* m_pParent;	
 	UINT m_nNotifyfCloseEvent;
-
+	CString m_sWorkingFolder;
+	CString m_sPackageBatch;
+	
 	DECLARE_MESSAGE_MAP()
 public:
 	virtual BOOL OnInitDialog();
+	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnDestroy();
 	afx_msg LRESULT OnCloseSystemExecThread(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnTakeNextSystemExecThread(WPARAM wParam, LPARAM lParam);

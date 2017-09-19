@@ -158,7 +158,7 @@ AdbExecThread(LPVOID lpParam)
 	while(TRUE) {
 		dwEvent =
 		    WaitForMultipleObjects(
-		        2,         // number of objects in array
+		        3,         // number of objects in array
 		        ghEvents,  // array of objects
 		        FALSE,     // wait for any object
 		        5000       // five-second wait
@@ -209,7 +209,7 @@ AdbExecThread(LPVOID lpParam)
 
 			// hExitEvent
 			case WAIT_OBJECT_0 + 2:
-				OutputDebugString(_T("Second event was signaled.\n"));
+				OutputDebugString(_T("Exit event was signaled.\n"));
 				goto exit;
 
 			case WAIT_TIMEOUT:
@@ -219,7 +219,7 @@ AdbExecThread(LPVOID lpParam)
 			// Return value is invalid.
 			default:
 				CString Tmp;
-				Tmp.Format(_T("Wait error: %d\n"), GetLastError());
+				Tmp.Format(_T("[%s] Wait error: evt:%d err:%d\n"), pDevice->Serial, dwEvent, GetLastError());
 				OutputDebugString(Tmp);
 				OutputString( pDevice->wndStatus, Tmp);
 				ExitProcess(0);

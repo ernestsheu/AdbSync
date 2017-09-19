@@ -33,9 +33,6 @@ int SplitString(CString& content, TCHAR token, CStringList& outList)
 
 void OutputString(CEdit* pEdit, LPCTSTR pszFormat, ...)
 {
-	if(pEdit == NULL) {
-		return;
-	}
 
 
 	CString str;
@@ -44,6 +41,11 @@ void OutputString(CEdit* pEdit, LPCTSTR pszFormat, ...)
 	va_start( argList, pszFormat );
 	str.FormatV( pszFormat, argList );
 	va_end( argList );
+
+	if(pEdit == NULL) {
+		OutputDebugString(str + _T("\n"));
+		return;
+	}
 
 
 	// Add the text in the end

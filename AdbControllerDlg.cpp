@@ -318,7 +318,11 @@ BOOL CAdbControllerDlg::OnInitDialog()
 
 	TCHAR NPath[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, NPath);
+#ifdef _DEBUG
+	m_sWorkingFolder = _T("V:\\_Application\\¤Ñ°ó\\AdbSyncApp");
+#else
 	m_sWorkingFolder = NPath;
+#endif
 	OutputString( m_wStatus, _T("Current Dir: %s"), m_sWorkingFolder);
 
 	for(int idx = 0; idx < TOTAL_DEVICE;idx++){
@@ -333,20 +337,6 @@ void CAdbControllerDlg::OnDestroy()
 {
 	SaveProfile();
 
-	POSITION pos = m_SyncDevices.GetHeadPosition();
-
-	while(pos) {
-		CAdbDevice device = m_SyncDevices.GetNext(pos);
-		SetEvent(device.PAdbThreadParam->hExitEvent);
-		WaitForSingleObject(device.PAdbThreadParam->hExitFinishedEvent, 3000);
-		CloseHandle(device.PAdbThreadParam->hTouchEvent);
-		CloseHandle(device.PAdbThreadParam->hExitEvent);
-		CloseHandle(device.PAdbThreadParam->hExitFinishedEvent);
-		CloseHandle(device.PAdbThreadParam->hMoveEvent);
-		CloseHandle(device.hThread);
-		delete device.PAdbThreadParam;
-	}
-
 }
 
 
@@ -358,6 +348,24 @@ void CAdbControllerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		dlgAbout.DoModal();
 	}
 	else {
+		if(nID == SC_CLOSE){
+
+			POSITION pos = m_SyncDevices.GetHeadPosition();
+
+			while(pos) {
+				CAdbDevice device = m_SyncDevices.GetNext(pos);
+				SetEvent(device.PAdbThreadParam->hExitEvent);
+				WaitForSingleObject(device.PAdbThreadParam->hExitFinishedEvent, 3000);
+				CloseHandle(device.PAdbThreadParam->hTouchEvent);
+				CloseHandle(device.PAdbThreadParam->hExitEvent);
+				CloseHandle(device.PAdbThreadParam->hExitFinishedEvent);
+				CloseHandle(device.PAdbThreadParam->hMoveEvent);
+				CloseHandle(device.hThread);
+				delete device.PAdbThreadParam;
+			}
+		}
+
+		
 		CDialogEx::OnSysCommand(nID, lParam);
 	}
 }
@@ -1169,6 +1177,10 @@ LRESULT CAdbControllerDlg::OnClosePackageDialog(WPARAM wParam, LPARAM lParam)
 {
 
 	int nDeviceIdx = (int)wParam;
+
+	CString temp;
+	temp.Format(_T("OnClosePackageDialog(%d)\n"), nDeviceIdx);
+	OutputDebugString(temp);
 	
 	ASSERT(nDeviceIdx >= 0 && nDeviceIdx < TOTAL_DEVICE);
 
@@ -1197,7 +1209,7 @@ void CAdbControllerDlg::OnCtrlRgn_Open_PackageDlg_Event(UINT nID)
 
 
 	//m_pSimpleDialog initialized to NULL in the constructor of CMyDialog class
-	m_dlgPackage[nDeviceIdx] = new CPackageDlg( this, nDeviceIdx, serial, UWM_CLOSE_PACKAGE_DLG);
+	m_dlgPackage[nDeviceIdx] = new CPackageDlg( this, nDeviceIdx, serial, UWM_CLOSE_PACKAGE_DLG, m_sWorkingFolder);
 
 	//Check if new succeeded and we got a valid pointer to a dialog object
 	if(m_dlgPackage[nDeviceIdx] != NULL) {

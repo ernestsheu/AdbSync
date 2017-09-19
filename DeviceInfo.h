@@ -3,7 +3,7 @@
 
 #pragma once
 
-
+#define DEF_SCRIPE_PATH _T("script")
 
 typedef enum {
 
@@ -18,4 +18,12 @@ typedef enum {
 } DEVICE_MAP_ID;
 
 
+const CString DEVICE_NAME[TOTAL_DEVICE] = {
+	_T("Master"),		
+	_T("Slave #1"),
+	_T("Slave #2"),
+	_T("Slave #3"),
+	_T("Slave #4"),
+
+};
 
