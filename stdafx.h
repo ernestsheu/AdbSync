@@ -51,4 +51,8 @@
 #include "myConsolePipe.h"
 
 
+#include "DeviceInfo.h"
+#include "ThreadExec.h"
+#include "Utility.h"
+
 

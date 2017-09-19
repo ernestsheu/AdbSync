@@ -148,7 +148,8 @@ public:
 	{
 		// for NT, invalid handles are indicated by a NULL return
 		// for 9x on the other hand we get INVALID_HANDLE_VALUE
-		return (int)GetStdHandle(STD_ERROR_HANDLE) > 0;
+		//return (int)GetStdHandle(STD_ERROR_HANDLE) > 0;
+		return GetStdHandle(STD_ERROR_HANDLE) != NULL;
 	}
 
 	// execute a command with a DOS command processor; see CPEXEC_xxx for return values
@@ -335,7 +336,7 @@ public:
 
 		// add the text in the end
 		// SetSel(-1, -1) just cancels selection, we need exact length to force caret @ end
-		UINT nLen = m_wndOutput->SendMessage(WM_GETTEXTLENGTH);
+		UINT nLen = (UINT)m_wndOutput->SendMessage(WM_GETTEXTLENGTH);
 		// ensure that the control won't be overflowed
 		UINT nMax = m_wndOutput->GetLimitText();
 		ATLASSERT(nMax > CPBUF_SIZE);

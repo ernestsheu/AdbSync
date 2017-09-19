@@ -131,11 +131,12 @@
 #define IDC_PACKAGE_CHECK19             1116
 #define IDC_PACKAGE_CHECK20             1117
 #define IDC_PACKAGE_TAKE_BTN            1118
-#define IDC_PACKAGE_M                   1119
-#define IDC_PACKAGE_S1                  1120
-#define IDC_PACKAGE_S2                  1121
-#define IDC_PACKAGE_S3                  1122
-#define IDC_PACKAGE_S4                  1123
+#define IDC_PACKAGE_CLEAR_BTN           1119
+#define IDC_PACKAGE_M                   1120
+#define IDC_PACKAGE_S1                  1121
+#define IDC_PACKAGE_S2                  1122
+#define IDC_PACKAGE_S3                  1123
+#define IDC_PACKAGE_S4                  1124
 
 // Next default values for new objects
 // 
@@ -143,7 +144,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1124
+#define _APS_NEXT_CONTROL_VALUE         1125
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

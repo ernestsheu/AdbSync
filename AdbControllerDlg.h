@@ -6,28 +6,6 @@
 
 
 
-typedef struct _AdbThreadData {
-	CEdit*	wndStatus;
-    CString	Serial;
-	
-	HANDLE	hExitEvent;
-	HANDLE	hExitFinishedEvent;
-
-
-	HANDLE	hTouchEvent;
-    CString	TouchEvt;
-	BOOL	bSync;
-	CPoint 	ptTapXY;
-
-
-	HANDLE	hMoveEvent;
-	BOOL	bMoveSync;
-	CPoint  ptStartXY;
-	CPoint 	ptEndXY;
-	UINT 	nMoveDuration;
-	
-} AdbThreadData, *PAdbThreadData;
-
 
 
 
@@ -81,6 +59,7 @@ protected:
 	afx_msg LRESULT OnEndChildProcess(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnSyncTouch(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnCloseSystemExecThread(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnClosePackageDialog(WPARAM wParam, LPARAM lParam);
 	afx_msg UINT OnGetDlgCode();
 	afx_msg void OnRun();
 	afx_msg void OnBreak();
@@ -98,6 +77,7 @@ protected:
 	afx_msg void OnBnClickedConnectDevices();
 	afx_msg void OnCtrlRgn_Device_Id_Changed(UINT nID);
 	afx_msg void OnCtrlRgn_Touch_Evt_Changed(UINT nID);
+	afx_msg void OnCtrlRgn_Open_PackageDlg_Event(UINT nID);
 	afx_msg void OnBnClickedDisconnectDevices();
 	afx_msg void OnBnClickedMoveDegree();
 	afx_msg void OnBnClickedMoveXy();
@@ -147,7 +127,8 @@ private:
 	UINT m_MoveDuration;
 	UINT m_MoveLength;
 
-
+	CDialogEx*	m_dlgPackage[TOTAL_DEVICE];
+	
 public:
 
 

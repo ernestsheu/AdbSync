@@ -10,7 +10,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-#include "PackageDlg.h"
+
 
 
 #ifdef _DEBUG
@@ -19,9 +19,8 @@
 
 
 
-#define UWM_SYNC_TOUPCH (WM_USER + 1)
-#define UWM_CLOSE_SYS_EXEC_THREAD (WM_USER + 2)
-#define UWM_CLOSE_PACKAGE_DLG (WM_USER + 3)
+#define UWM_SYNC_TOUPCH (WM_USER + 1) 
+#define UWM_CLOSE_SYS_EXEC_THREAD (WM_USER + 2) 
 #define TOUCH_EVENT_LENGTH 37
 #define TOUCH_DATA_LENGTH 18
 
@@ -36,7 +35,6 @@ typedef struct _DEVICE_CONTROL_IDS {
 	UINT nBtnD_MoveSync;
 	UINT nBtnD_Play_Script;
 	UINT nEditD_Script_File;
-	UINT nBtnD_OpenPkgDlg;
 } DEVICE_CONTROL_IDS;
 
 
@@ -48,10 +46,9 @@ static DEVICE_CONTROL_IDS G_DEVICE_CONTROL_MAP[TOTAL_DEVICE] = {
 		IDC_M_SYNC_CHK,
 		IDC_M_DEVICE_BTN,
 		IDC_M_TOUCH_EVT_BTN,
-		IDC_SYNC_MOVE_MASTER,
+		IDC_SYNC_MOVE_MASTER, 
 		IDC_M_PLAY_SCRIPT_BTN,
-		IDC_M_SCRIPT_FILE,		
-		IDC_PACKAGE_M
+		IDC_M_SCRIPT_FILE
 	},
 	// Slave 1
 	{
@@ -60,10 +57,9 @@ static DEVICE_CONTROL_IDS G_DEVICE_CONTROL_MAP[TOTAL_DEVICE] = {
 		IDC_S1_SYNC_CHK,
 		IDC_S1_DEVICE_BTN,
 		IDC_S1_TOUCH_EVT_BTN,
-		IDC_SYNC_MOVE_SLAVE_1,
+		IDC_SYNC_MOVE_SLAVE_1, 
 		IDC_S1_PLAY_SCRIPT_BTN,
-		IDC_S1_SCRIPT_FILE,		
-		IDC_PACKAGE_S1
+		IDC_S1_SCRIPT_FILE
 	},
 	// Slave 2
 	{
@@ -72,10 +68,9 @@ static DEVICE_CONTROL_IDS G_DEVICE_CONTROL_MAP[TOTAL_DEVICE] = {
 		IDC_S2_SYNC_CHK,
 		IDC_S2_DEVICE_BTN,
 		IDC_S2_TOUCH_EVT_BTN,
-		IDC_SYNC_MOVE_SLAVE_2,
+		IDC_SYNC_MOVE_SLAVE_2, 
 		IDC_S1_PLAY_SCRIPT_BTN,
-		IDC_S1_SCRIPT_FILE,		
-		IDC_PACKAGE_S2
+		IDC_S1_SCRIPT_FILE
 	},
 	// Slave 3
 	{
@@ -84,10 +79,9 @@ static DEVICE_CONTROL_IDS G_DEVICE_CONTROL_MAP[TOTAL_DEVICE] = {
 		IDC_S3_SYNC_CHK,
 		IDC_S3_DEVICE_BTN,
 		IDC_S3_TOUCH_EVT_BTN,
-		IDC_SYNC_MOVE_SLAVE_3,
+		IDC_SYNC_MOVE_SLAVE_3, 
 		IDC_S2_PLAY_SCRIPT_BTN,
-		IDC_S2_SCRIPT_FILE,		
-		IDC_PACKAGE_S3
+		IDC_S2_SCRIPT_FILE
 	},
 	// Slave 4
 	{
@@ -96,10 +90,9 @@ static DEVICE_CONTROL_IDS G_DEVICE_CONTROL_MAP[TOTAL_DEVICE] = {
 		IDC_S4_SYNC_CHK,
 		IDC_S4_DEVICE_BTN,
 		IDC_S4_TOUCH_EVT_BTN,
-		IDC_SYNC_MOVE_SLAVE_4,
+		IDC_SYNC_MOVE_SLAVE_4, 
 		IDC_S2_PLAY_SCRIPT_BTN,
-		IDC_S2_SCRIPT_FILE,		
-		IDC_PACKAGE_S4
+		IDC_S2_SCRIPT_FILE
 	}
 };
 
@@ -177,8 +170,6 @@ BEGIN_MESSAGE_MAP(CAdbControllerDlg, CDialogEx)
 	ON_MESSAGE(UWM_PIPEBROKEN, OnEndChildProcess)
 	ON_MESSAGE(UWM_SYNC_TOUPCH, OnSyncTouch)
 	ON_MESSAGE(UWM_CLOSE_SYS_EXEC_THREAD, OnCloseSystemExecThread)
-	ON_MESSAGE(UWM_CLOSE_PACKAGE_DLG, OnClosePackageDialog)
-
 	
 
 	ON_BN_CLICKED(IDOK, &CAdbControllerDlg::OnRun)
@@ -315,15 +306,11 @@ BOOL CAdbControllerDlg::OnInitDialog()
 	OutputString(m_wStatus, _T("CCC"));
 	OutputString(m_wStatus, _T("x:%d, y:%d"), 100, 200);
 	*/
-
+		
 	TCHAR NPath[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, NPath);
-	m_sWorkingFolder = NPath;
+	m_sWorkingFolder = NPath;	
 	OutputString( m_wStatus, _T("Current Dir: %s"), m_sWorkingFolder);
-
-	for(int idx = 0; idx < TOTAL_DEVICE;idx++){
-		m_dlgPackage[idx] = NULL;
-	}
 
 	return TRUE;
 }
@@ -608,7 +595,7 @@ void CAdbControllerDlg::OnSyncOneTouchToSend(CString data)
 	else {
 		return;
 	}
-
+	
 	OutputString( m_wStatus, _T("Touch %d %d"), m_TapXY.x, m_TapXY.y);
 
 	list_pos = m_SyncDevices.GetHeadPosition();
@@ -686,12 +673,12 @@ LRESULT CAdbControllerDlg::OnCloseSystemExecThread(WPARAM wParam, LPARAM lParam)
 {
 
 	PSystemExecParam pParam = (PSystemExecParam)wParam;
-
+	
 	// wait for thread exit.
 	Sleep(100);
 	CloseHandle(pParam->hThread);
 	delete pParam;
-
+	
 	return 0;
 }
 
@@ -938,7 +925,6 @@ void CAdbControllerDlg::OnCtrlRgn_Play_Event(UINT nID)
 	OutputDebugString(temp);
 
 	int nDeviceIdx = FindDeviceIndex( nID, offsetof(struct _DEVICE_CONTROL_IDS, nBtnD_Play_Script));
-
 	if(nDeviceIdx == -1) {
 		return;
 	}
@@ -948,21 +934,21 @@ void CAdbControllerDlg::OnCtrlRgn_Play_Event(UINT nID)
 
 
 	PSystemExecParam pParam = new SystemExecParam;
-
+	
 	pParam->wnd = this;
 	pParam->wStatus = m_wStatus;
 	pParam->btnPlay = (CButton*)GetDlgItem(G_DEVICE_CONTROL_MAP[nDeviceIdx].nBtnD_Play_Script);
 	pParam->cmdLine = text;
 	pParam->nNoityfCloseThreadEvent = UWM_CLOSE_SYS_EXEC_THREAD;
 	pParam->hThread =
-	    CreateThread(
-	        NULL,					// default security attributes
-	        0,						// use default stack size
-	        SystemExecuteThread,	// thread function name
-	        pParam, 				// argument to thread function
-	        0,						// use default creation flags
-	        NULL);					// returns the thread identifier
-
+		CreateThread(
+			NULL,					// default security attributes
+			0,						// use default stack size
+			SystemExecuteThread,	// thread function name
+			pParam, 				// argument to thread function
+			0,						// use default creation flags
+			NULL);					// returns the thread identifier
+	
 }
 
 
@@ -1051,12 +1037,12 @@ void CAdbControllerDlg::OnBnClickedMoveDegree()
 	CString text;
 	int degree = 0;
 	CPoint pt2;
-
+	
 	if(m_bNeedUpdateMoveSync) {
 		UpdateMove();
 		m_bNeedUpdateMoveSync = FALSE;
 	}
-
+	
 	editor = (CEdit*)GetDlgItem(IDC_DEGREE);
 	editor->GetWindowText(text);
 	degree = _wtoi((LPCTSTR)text);
@@ -1064,12 +1050,12 @@ void CAdbControllerDlg::OnBnClickedMoveDegree()
 	pt2.x = Joy_X( m_ptMove.x, m_MoveLength, degree);
 	pt2.y = Joy_Y( m_ptMove.y, m_MoveLength, degree);
 
-
+	
 	OutputString( m_wStatus, _T("cos %f, sin %f"), cos(degree), sin(degree));
 	OutputString( m_wStatus, _T("R_X %d, R_Y %d"), R_X( m_MoveLength, degree), R_Y( m_MoveLength, degree));
 
 
-
+	
 	POSITION pos = m_SyncDevices.GetHeadPosition();
 
 	while(pos) {
@@ -1090,12 +1076,12 @@ void CAdbControllerDlg::OnBnClickedMoveXy()
 	CString text;
 	int degree = 0;
 	CPoint pt2;
-
+	
 	if(m_bNeedUpdateMoveSync) {
 		UpdateMove();
 		m_bNeedUpdateMoveSync = FALSE;
 	}
-
+	
 	editor = (CEdit*)GetDlgItem(IDC_POINT_X);
 	editor->GetWindowText(text);
 	pt2.x = _wtoi((LPCTSTR)text);
@@ -1103,11 +1089,10 @@ void CAdbControllerDlg::OnBnClickedMoveXy()
 	editor = (CEdit*)GetDlgItem(IDC_POINT_Y);
 	editor->GetWindowText(text);
 	pt2.y = _wtoi((LPCTSTR)text);
-
+	
 	OutputString( m_wStatus, _T("Touch %d %d"), m_TapXY.x, m_TapXY.y);
-
+	
 	POSITION pos = m_SyncDevices.GetHeadPosition();
-
 	while(pos) {
 		CAdbDevice device = m_SyncDevices.GetNext(pos);
 		device.PAdbThreadParam->ptTapXY = pt2;
@@ -1164,52 +1149,32 @@ void CAdbControllerDlg::OnBnClickedConnectDevices()
 }
 
 
-
-LRESULT CAdbControllerDlg::OnClosePackageDialog(WPARAM wParam, LPARAM lParam)
-{
-
-	int nDeviceIdx = (int)wParam;
-	
-	ASSERT(nDeviceIdx >= 0 && nDeviceIdx < TOTAL_DEVICE);
-
-	delete m_dlgPackage[nDeviceIdx];
-	m_dlgPackage[nDeviceIdx] = NULL;
-
-	return 0;
-}
-
 void CAdbControllerDlg::OnCtrlRgn_Open_PackageDlg_Event(UINT nID)
 {
 	CString temp;
-	temp.Format(_T("OnCtrlRgn_Open_PackageDlg_Event(%d)\n"), nID);
+	temp.Format(_T("OnCtrlRgn_Move_Event(%d)\n"), nID);
 	OutputDebugString(temp);
 
 
-	int nDeviceIdx = FindDeviceIndex( nID, offsetof(struct _DEVICE_CONTROL_IDS, nBtnD_OpenPkgDlg));
-	if(nDeviceIdx == -1) {
-		return;
-	}
-
-	
-	CEdit* editorDevice = (CEdit*)GetDlgItem(G_DEVICE_CONTROL_MAP[nDeviceIdx].nEditID_Device);
-	CString serial;
-	editorDevice->GetWindowText(serial);
-
-
 	//m_pSimpleDialog initialized to NULL in the constructor of CMyDialog class
-	m_dlgPackage[nDeviceIdx] = new CPackageDlg( this, nDeviceIdx, serial, UWM_CLOSE_PACKAGE_DLG);
-
+	m_pSimpleDlg = new CSimpleDlg();
 	//Check if new succeeded and we got a valid pointer to a dialog object
-	if(m_dlgPackage[nDeviceIdx] != NULL) {
-		BOOL ret = ((CPackageDlg*)m_dlgPackage[nDeviceIdx])->Create();
+	if(m_pSimpleDlg != NULL)
+	{
+	BOOL ret = m_pSimpleDlg->Create(IDD_SIMPLEDIALOG, this);
 
-		if(!ret) AfxMessageBox(_T("Error creating Dialog"));
+	if(!ret)   //Create failed.
+	AfxMessageBox(_T("Error creating Dialog"));
 
-		m_dlgPackage[nDeviceIdx]->ShowWindow(SW_SHOW);
+	m_pSimpleDlg->ShowWindow(SW_SHOW);
 	}
-	else {
-		AfxMessageBox(_T("Error Creating Dialog Object"));
+	else
+	{
+	AfxMessageBox(_T("Error Creating Dialog Object"));
 	}
+
+
+
 
 }
 
@@ -1393,16 +1358,16 @@ void CAdbControllerDlg::LoadProfile()
 	*/
 	editor = (CEdit*)GetDlgItem(IDC_M_SCRIPT_FILE);
 	editor->SetWindowText(pApp->GetProfileString(PRJ_SCRIPT_FILE, PRJ_MASTER));
-
+	
 	editor = (CEdit*)GetDlgItem(IDC_S1_SCRIPT_FILE);
 	editor->SetWindowText(pApp->GetProfileString(PRJ_SCRIPT_FILE, PRJ_SLAVE1));
-
+	
 	editor = (CEdit*)GetDlgItem(IDC_S2_SCRIPT_FILE);
 	editor->SetWindowText(pApp->GetProfileString(PRJ_SCRIPT_FILE, PRJ_SLAVE2));
-
+	
 	editor = (CEdit*)GetDlgItem(IDC_S3_SCRIPT_FILE);
 	editor->SetWindowText(pApp->GetProfileString(PRJ_SCRIPT_FILE, PRJ_SLAVE3));
-
+	
 	editor = (CEdit*)GetDlgItem(IDC_S4_SCRIPT_FILE);
 	editor->SetWindowText(pApp->GetProfileString(PRJ_SCRIPT_FILE, PRJ_SLAVE4));
 
@@ -1486,19 +1451,19 @@ void CAdbControllerDlg::SaveProfile()
 	editor = (CEdit*)GetDlgItem(IDC_M_SCRIPT_FILE);
 	editor->GetWindowText(text);
 	pApp->WriteProfileString( PRJ_SCRIPT_FILE, PRJ_MASTER, text);
-
+	
 	editor = (CEdit*)GetDlgItem(IDC_S1_SCRIPT_FILE);
 	editor->GetWindowText(text);
 	pApp->WriteProfileString( PRJ_SCRIPT_FILE, PRJ_SLAVE1, text);
-
+	
 	editor = (CEdit*)GetDlgItem(IDC_S2_SCRIPT_FILE);
 	editor->GetWindowText(text);
 	pApp->WriteProfileString( PRJ_SCRIPT_FILE, PRJ_SLAVE2, text);
-
+	
 	editor = (CEdit*)GetDlgItem(IDC_S3_SCRIPT_FILE);
 	editor->GetWindowText(text);
 	pApp->WriteProfileString( PRJ_SCRIPT_FILE, PRJ_SLAVE3, text);
-
+	
 	editor = (CEdit*)GetDlgItem(IDC_S4_SCRIPT_FILE);
 	editor->GetWindowText(text);
 	pApp->WriteProfileString( PRJ_SCRIPT_FILE, PRJ_SLAVE4, text);
