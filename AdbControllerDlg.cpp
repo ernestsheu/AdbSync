@@ -27,6 +27,46 @@
 
 
 
+#define PRJ_DEVICE 			_T("device ")
+#define PRJ_DEVICE_SERIAL 	_T("serial")
+#define PRJ_TOUCH_EVT 		_T("touch_evt")
+#define PRJ_SYNC_CHECK 		_T("sync_chk")
+
+#define PRJ_MAIN 			_T("main")
+#define PRJ_CMD_LINE		_T("cmd_line")
+
+#define PRJ_SYNC_MOVE 			_T("sync_move")
+#define PRJ_CENTER_X 			_T("center_x")
+#define PRJ_CENTER_Y 			_T("center_y")
+#define PRJ_MOVE_LEN 			_T("move_length")
+#define PRJ_MOVE_DURATION 		_T("move_duration")
+#define PRJ_SYNC_MOVE_MASTER	_T("move_master")
+#define PRJ_SYNC_MOVE_SLAVE1	_T("move_slave1")
+#define PRJ_SYNC_MOVE_SLAVE2	_T("move_sllave2")
+#define PRJ_SYNC_MOVE_SLAVE3	_T("move_sllave3")
+#define PRJ_SYNC_MOVE_SLAVE4	_T("move_sllave4")
+
+#define PRJ_SCRIPT_FILE 		_T("script_file")
+
+#define PRJ_MASTER				_T("master")
+#define PRJ_SLAVE1				_T("sliave1")
+#define PRJ_SLAVE2				_T("sliave2")
+#define PRJ_SLAVE3				_T("sliave3")
+#define PRJ_SLAVE4				_T("sliave4")
+
+
+#ifndef M_PI
+#define M_PI       3.14159265358979323846
+#endif
+#define R_X( r, degree) ((double)r*cos((double)degree*M_PI/180.0f))
+#define R_Y( r, degree) ((double)r*sin((double)degree*M_PI/180.0f))
+
+#define Joy_X(center_x, r, degree) (center_x + (int)R_X(r, degree))
+#define Joy_Y(center_y, r, degree) (center_y - (int)R_Y(r, degree))
+
+
+
+
 typedef struct _DEVICE_CONTROL_IDS {
 	UINT nEditID_Device;
 	UINT nEditID_TouchEvt;
@@ -174,10 +214,10 @@ BEGIN_MESSAGE_MAP(CAdbControllerDlg, CDialogEx)
 	ON_WM_KEYDOWN()
 	ON_WM_DESTROY()
 
-	ON_MESSAGE(UWM_PIPEBROKEN, OnEndChildProcess)
-	ON_MESSAGE(UWM_SYNC_TOUPCH, OnSyncTouch)
-	ON_MESSAGE(UWM_CLOSE_SYS_EXEC_THREAD, OnCloseSystemExecThread)
-	ON_MESSAGE(UWM_CLOSE_PACKAGE_DLG, OnClosePackageDialog)
+	ON_MESSAGE(UWM_PIPEBROKEN, &CAdbControllerDlg::OnEndChildProcess)
+	ON_MESSAGE(UWM_SYNC_TOUPCH, &CAdbControllerDlg::OnSyncTouch)
+	ON_MESSAGE(UWM_CLOSE_SYS_EXEC_THREAD, &CAdbControllerDlg::OnCloseSystemExecThread)
+	ON_MESSAGE(UWM_CLOSE_PACKAGE_DLG, &CAdbControllerDlg::OnClosePackageDialog)
 
 	
 
@@ -205,35 +245,6 @@ BEGIN_MESSAGE_MAP(CAdbControllerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_MOVE_DEGREE, &CAdbControllerDlg::OnBnClickedMoveDegree)
 	ON_BN_CLICKED(IDC_MOVE_XY, &CAdbControllerDlg::OnBnClickedMoveXy)
 END_MESSAGE_MAP()
-
-
-
-#define PRJ_DEVICE 			_T("device ")
-#define PRJ_DEVICE_SERIAL 	_T("serial")
-#define PRJ_TOUCH_EVT 		_T("touch_evt")
-#define PRJ_SYNC_CHECK 		_T("sync_chk")
-
-#define PRJ_MAIN 			_T("main")
-#define PRJ_CMD_LINE		_T("cmd_line")
-
-#define PRJ_SYNC_MOVE 			_T("sync_move")
-#define PRJ_CENTER_X 			_T("center_x")
-#define PRJ_CENTER_Y 			_T("center_y")
-#define PRJ_MOVE_LEN 			_T("move_length")
-#define PRJ_MOVE_DURATION 		_T("move_duration")
-#define PRJ_SYNC_MOVE_MASTER	_T("move_master")
-#define PRJ_SYNC_MOVE_SLAVE1	_T("move_slave1")
-#define PRJ_SYNC_MOVE_SLAVE2	_T("move_sllave2")
-#define PRJ_SYNC_MOVE_SLAVE3	_T("move_sllave3")
-#define PRJ_SYNC_MOVE_SLAVE4	_T("move_sllave4")
-
-#define PRJ_SCRIPT_FILE 		_T("script_file")
-
-#define PRJ_MASTER				_T("master")
-#define PRJ_SLAVE1				_T("sliave1")
-#define PRJ_SLAVE2				_T("sliave2")
-#define PRJ_SLAVE3				_T("sliave3")
-#define PRJ_SLAVE4				_T("sliave4")
 
 
 
@@ -982,15 +993,6 @@ void CAdbControllerDlg::OnCtrlRgn_Sync_Change(UINT nID)
 	m_bNeedUpdateMoveSync = TRUE;
 }
 
-#ifndef M_PI
-#define M_PI       3.14159265358979323846
-#endif
-
-#define R_X( r, degree) ((double)r*cos((double)degree*M_PI/180.0f))
-#define R_Y( r, degree) ((double)r*sin((double)degree*M_PI/180.0f))
-
-#define Joy_X(center_x, r, degree) (center_x + (int)R_X(r, degree))
-#define Joy_Y(center_y, r, degree) (center_y - (int)R_Y(r, degree))
 
 
 void CAdbControllerDlg::OnCtrlRgn_Move_Event(UINT nID)

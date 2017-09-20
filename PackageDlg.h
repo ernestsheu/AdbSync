@@ -28,6 +28,7 @@ private:
 	void UpdateParameter();
 	void LoadProfile();
 	void SaveProfile();
+	void OpenThing(int nPkgId);
 
 
 private:
@@ -44,6 +45,8 @@ private:
 	UINT m_nNotifyfCloseEvent;
 	CString m_sWorkingFolder;
 	CString m_sPackageBatch;
+	CString m_sChkPackageBatch;
+	int m_nThingId;
 	
 	DECLARE_MESSAGE_MAP()
 public:
@@ -55,4 +58,9 @@ public:
 	afx_msg void OnBnClickedPackageTakeBtn();
 	afx_msg void OnCtrlRgn_Take_one_package_btn(UINT nID);
 	afx_msg void OnBnClickedPackageClearBtn();
+	afx_msg void OnBnClickedPreviousThingBtn();
+	afx_msg void OnBnClickedNextThingBtn();
+	afx_msg void OnBnClickedClearThingBtn();
+	afx_msg void OnBnClickedOpenThingBtn();
+	
 };

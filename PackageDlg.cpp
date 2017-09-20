@@ -9,7 +9,7 @@
 
 #define DEF_PKG_COL 5
 #define DEF_PKG_ROW 4
-
+#define TOTAL_PACKAGES (DEF_PKG_COL*DEF_PKG_ROW)
 
 #define UWM_CLOSE_TAKE_THREAD (WM_USER + 100) 
 #define UWM_TAKE_NEXT_THREAD (WM_USER + 101) 
@@ -29,7 +29,7 @@ typedef struct _PACKAGE_MAP_IDS {
 } DEVICE_CONTROL_IDS;
 
 
-static DEVICE_CONTROL_IDS G_PACKAGE_ID_MAP[DEF_PKG_COL*DEF_PKG_ROW] = {
+static DEVICE_CONTROL_IDS G_PACKAGE_ID_MAP[TOTAL_PACKAGES] = {
 	{
 		IDC_PACKAGE_BTN1,
 		IDC_PACKAGE_CHECK1
@@ -132,6 +132,7 @@ CPackageDlg::CPackageDlg(CWnd* pParent /*=NULL*/, int nDeviceIdx, CString sSeria
 	m_sWorkingFolder = sWorkFolder;
 	m_pParent = pParent;
 	m_nNotifyfCloseEvent = nNotifyCloseDlgEvent;
+	m_nThingId = 0; // first item
 }
 
 CPackageDlg::~CPackageDlg()
@@ -147,6 +148,28 @@ BOOL CPackageDlg::Create(void)
 	return CDialogEx::Create(IDD_PACKIGE_DLG, m_pParent);
 }
 
+void CPackageDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+}
+
+
+BEGIN_MESSAGE_MAP(CPackageDlg, CDialogEx)
+	ON_WM_DESTROY()
+	ON_WM_SYSCOMMAND()
+	ON_MESSAGE(UWM_CLOSE_TAKE_THREAD, OnCloseSystemExecThread)
+	ON_MESSAGE(UWM_TAKE_NEXT_THREAD, OnTakeNextSystemExecThread)
+	ON_CONTROL_RANGE(BN_CLICKED, IDC_PACKAGE_BTN1, IDC_PACKAGE_BTN20, &CPackageDlg::OnCtrlRgn_Take_one_package_btn)
+	ON_BN_CLICKED(IDC_PACKAGE_TAKE_BTN, &CPackageDlg::OnBnClickedPackageTakeBtn)
+	ON_BN_CLICKED(IDC_PACKAGE_CLEAR_BTN, &CPackageDlg::OnBnClickedPackageClearBtn)
+	ON_BN_CLICKED(IDC_PREVIOUS_THING, &CPackageDlg::OnBnClickedPreviousThingBtn)
+	ON_BN_CLICKED(IDC_NEXT_THING, &CPackageDlg::OnBnClickedNextThingBtn)
+	ON_BN_CLICKED(IDC_CLEAR_THING, &CPackageDlg::OnBnClickedClearThingBtn)
+	ON_BN_CLICKED(IDC_OPEN_THING, &CPackageDlg::OnBnClickedOpenThingBtn)
+END_MESSAGE_MAP()
+
+
+
 BOOL CPackageDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
@@ -158,7 +181,9 @@ BOOL CPackageDlg::OnInitDialog()
 	
 	LoadProfile();
 
-	m_sPackageBatch.Format(_T("\"%s\\%s\\package.bat\" %s "), m_sWorkingFolder, DEF_SCRIPE_PATH, m_Serial);
+	m_sPackageBatch.Format(_T("\"%s\\%s\\pkg_take.bat\" %s "), m_sWorkingFolder, DEF_SCRIPE_PATH, m_Serial);
+	m_sChkPackageBatch.Format(_T("\"%s\\%s\\pkg_open.bat\" %s "), m_sWorkingFolder, DEF_SCRIPE_PATH, m_Serial);
+	GetDlgItem(IDC_STATIC_PKD_ID)->SetWindowText(_T("1"));
 
 	return TRUE;
 }
@@ -185,21 +210,6 @@ void CPackageDlg::OnDestroy()
 	
 }
 
-void CPackageDlg::DoDataExchange(CDataExchange* pDX)
-{
-	CDialogEx::DoDataExchange(pDX);
-}
-
-
-BEGIN_MESSAGE_MAP(CPackageDlg, CDialogEx)
-	ON_WM_DESTROY()
-	ON_WM_SYSCOMMAND()
-	ON_MESSAGE(UWM_CLOSE_TAKE_THREAD, OnCloseSystemExecThread)
-	ON_MESSAGE(UWM_TAKE_NEXT_THREAD, OnTakeNextSystemExecThread)
-	ON_CONTROL_RANGE(BN_CLICKED, IDC_PACKAGE_BTN1, IDC_PACKAGE_BTN20, &CPackageDlg::OnCtrlRgn_Take_one_package_btn)
-	ON_BN_CLICKED(IDC_PACKAGE_TAKE_BTN, &CPackageDlg::OnBnClickedPackageTakeBtn)
-	ON_BN_CLICKED(IDC_PACKAGE_CLEAR_BTN, &CPackageDlg::OnBnClickedPackageClearBtn)
-END_MESSAGE_MAP()
 
 
 // CPackageDlg 訊息處理常式
@@ -208,7 +218,7 @@ void CPackageDlg::OnBnClickedPackageTakeBtn()
 	CButton* btnCheck;
 	m_lstPkgPts.RemoveAll();
 
-	for(int idx = 0; idx < (DEF_PKG_COL*DEF_PKG_ROW); idx++) {
+	for(int idx = 0; idx < TOTAL_PACKAGES; idx++) {
 		btnCheck = (CButton*)GetDlgItem(G_PACKAGE_ID_MAP[idx].nChkID_Pkg);
 		if(btnCheck->GetCheck() == 1){
 			CPoint ptPkg;
@@ -228,7 +238,7 @@ void CPackageDlg::OnBnClickedPackageClearBtn()
 {
 	CButton* btnCheck;
 
-	for(int idx = 0; idx < (DEF_PKG_COL*DEF_PKG_ROW); idx++) {
+	for(int idx = 0; idx < TOTAL_PACKAGES; idx++) {
 		btnCheck = (CButton*)GetDlgItem(G_PACKAGE_ID_MAP[idx].nChkID_Pkg);
 		btnCheck->SetCheck(0);
 	}
@@ -339,14 +349,69 @@ LRESULT CPackageDlg::OnTakeNextSystemExecThread(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+void CPackageDlg::OnBnClickedPreviousThingBtn()
+{
+	if(m_nThingId <= 0){
+		m_nThingId = TOTAL_PACKAGES - 1;
+	}
+	else {
+		m_nThingId--;
+	}
+
+	CString tmp;
+	tmp.Format(_T("%s"), m_nThingId + 1);
+	GetDlgItem(IDC_STATIC_PKD_ID)->SetWindowText(tmp);
+
+	OpenThing(m_nThingId);	
+	
+}
+
+void CPackageDlg::OnBnClickedNextThingBtn()
+{
+	if(m_nThingId == (TOTAL_PACKAGES - 1)){
+		m_nThingId = 0;
+	}
+	else {
+		m_nThingId++;
+	}
+
+	CString tmp;
+	tmp.Format(_T("%s"), m_nThingId + 1);
+	GetDlgItem(IDC_STATIC_PKD_ID)->SetWindowText(tmp);
+	OpenThing(m_nThingId);	
+	
+}
+
+void CPackageDlg::OnBnClickedOpenThingBtn()
+{
+	if(m_nThingId >= TOTAL_PACKAGES){
+		m_nThingId = (TOTAL_PACKAGES - 1);
+	}
+	else if(m_nThingId < 0){
+		m_nThingId = 0;
+	}
+
+	CString tmp;
+	tmp.Format(_T("%s"), m_nThingId + 1);
+	GetDlgItem(IDC_STATIC_PKD_ID)->SetWindowText(tmp);
+	OpenThing(m_nThingId);	
+	
+}
+
+
+void CPackageDlg::OnBnClickedClearThingBtn()
+{
+	m_nThingId = 0;
+	GetDlgItem(IDC_STATIC_PKD_ID)->SetWindowText(_T("1"));
+	
+}
+
 
 int CPackageDlg::FindPackageId(UINT nControlId, int member)
 {
 
-	for(int idx = 0; idx < (DEF_PKG_COL*DEF_PKG_ROW); idx++) {
-
+	for(int idx = 0; idx < TOTAL_PACKAGES; idx++) {
 		UINT nCtrlId = *(UINT *)((char *)&G_PACKAGE_ID_MAP[idx] + member);
-
 		if(nCtrlId == nControlId) {
 			return idx;
 		}
@@ -436,10 +501,36 @@ void CPackageDlg::SaveProfile()
 	editor->GetWindowText(text);
 	pApp->WriteProfileString( PRJ_PKG, PRJ_INV_H, text);
 
-
-
-
 }
 
+
+void CPackageDlg::OpenThing(int nPkgId)
+{	
+	EnterCriticalSection (&m_LockTackOnePackage);
+		CPoint ptPkg;
+		GetPackagePoint(nPkgId, ptPkg);
+
+
+		CString cmd;	
+		cmd.Format(_T("%s %d %d"), m_sChkPackageBatch, ptPkg.x, ptPkg.y);
+
+		PSystemExecParam pParam = new SystemExecParam;
+
+		pParam->wnd 		= this;
+		pParam->wStatus 	= NULL;
+		pParam->btnPlay 	= NULL;
+		pParam->cmdLine 	= cmd;
+		pParam->nNoityfCloseThreadEvent = UWM_CLOSE_TAKE_THREAD;
+		pParam->hThread 	=
+							CreateThread(
+								NULL,					// default security attributes
+								0,						// use default stack size
+								SystemExecuteThread,	// thread function name
+								pParam, 				// argument to thread function
+								0,						// use default creation flags
+								NULL);					// returns the thread identifier
+	LeaveCriticalSection (&m_LockTackOnePackage);
+	
+}
 
 
