@@ -71,3 +71,17 @@ void OutputString(CEdit* pEdit, LPCTSTR pszFormat, ...)
 }
 
 
+void DbgString(LPCTSTR pszFormat, ...)
+{
+	CString str;
+	va_list argList;
+
+	va_start( argList, pszFormat );
+	str.FormatV( pszFormat, argList );
+	va_end( argList );
+	
+	OutputDebugString(str);
+
+}
+
+

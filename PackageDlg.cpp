@@ -13,7 +13,12 @@
 
 #define UWM_CLOSE_TAKE_THREAD (WM_USER + 100) 
 #define UWM_TAKE_NEXT_THREAD (WM_USER + 101) 
+#define UWM_OPEN_NEXT_THREAD (WM_USER + 102) 
 
+
+
+#define SCR_PKG_TAKE DEF_SCRIPE_PATH _T("\\pkg_take.bat")
+#define SCR_PKG_OPEN DEF_SCRIPE_PATH _T("\\pkg_open.bat")
 
 #define PRJ_PKG 			_T("package")
 
@@ -138,7 +143,7 @@ CPackageDlg::CPackageDlg(CWnd* pParent /*=NULL*/, int nDeviceIdx, CString sSeria
 CPackageDlg::~CPackageDlg()
 {
 
-	OutputDebugString(_T("~CPackageDlg()\n"));
+	DbgString(_T("~CPackageDlg()\n"));
 
 }
 
@@ -159,6 +164,7 @@ BEGIN_MESSAGE_MAP(CPackageDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_MESSAGE(UWM_CLOSE_TAKE_THREAD, OnCloseSystemExecThread)
 	ON_MESSAGE(UWM_TAKE_NEXT_THREAD, OnTakeNextSystemExecThread)
+	ON_MESSAGE(UWM_OPEN_NEXT_THREAD, OnOpenNextSystemExecThread)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_PACKAGE_BTN1, IDC_PACKAGE_BTN20, &CPackageDlg::OnCtrlRgn_Take_one_package_btn)
 	ON_BN_CLICKED(IDC_PACKAGE_TAKE_BTN, &CPackageDlg::OnBnClickedPackageTakeBtn)
 	ON_BN_CLICKED(IDC_PACKAGE_CLEAR_BTN, &CPackageDlg::OnBnClickedPackageClearBtn)
@@ -166,6 +172,7 @@ BEGIN_MESSAGE_MAP(CPackageDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_NEXT_THING, &CPackageDlg::OnBnClickedNextThingBtn)
 	ON_BN_CLICKED(IDC_CLEAR_THING, &CPackageDlg::OnBnClickedClearThingBtn)
 	ON_BN_CLICKED(IDC_OPEN_THING, &CPackageDlg::OnBnClickedOpenThingBtn)
+	ON_BN_CLICKED(IDC_PACKAGE_OPEN_BTN, &CPackageDlg::OnBnClickedPackageOpenBtn)
 END_MESSAGE_MAP()
 
 
@@ -181,8 +188,8 @@ BOOL CPackageDlg::OnInitDialog()
 	
 	LoadProfile();
 
-	m_sPackageBatch.Format(_T("\"%s\\%s\\pkg_take.bat\" %s "), m_sWorkingFolder, DEF_SCRIPE_PATH, m_Serial);
-	m_sChkPackageBatch.Format(_T("\"%s\\%s\\pkg_open.bat\" %s "), m_sWorkingFolder, DEF_SCRIPE_PATH, m_Serial);
+	m_sPackageBatch.Format(_T("\"%s\\%s\" %s "), m_sWorkingFolder, SCR_PKG_TAKE, m_Serial);
+	m_sChkPackageBatch.Format(_T("\"%s\\%s\" %s "), m_sWorkingFolder, SCR_PKG_OPEN, m_Serial);
 	GetDlgItem(IDC_STATIC_PKD_ID)->SetWindowText(_T("1"));
 
 	return TRUE;
@@ -190,9 +197,7 @@ BOOL CPackageDlg::OnInitDialog()
 
 void CPackageDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
-	CString temp;
-	temp.Format(_T("OnSysCommand(0x%x, 0x%x)\n"), nID, lParam);
-	OutputDebugString(temp);
+	DbgString(_T("OnSysCommand(0x%x, 0x%x)\n"), nID, lParam);
 	
 	CDialogEx::OnSysCommand( nID, lParam);
 	if(nID == SC_CLOSE){
@@ -206,14 +211,13 @@ void CPackageDlg::OnDestroy()
 {
 	DeleteCriticalSection(&m_LockTackOnePackage);
 	
-	OutputDebugString(_T("OnDestroy()\n"));
+	DbgString(_T("OnDestroy()\n"));
 	
 }
 
 
 
-// CPackageDlg 訊息處理常式
-void CPackageDlg::OnBnClickedPackageTakeBtn()
+void CPackageDlg::PackagesOperation(int nId, UINT message)
 {
 	CButton* btnCheck;
 	m_lstPkgPts.RemoveAll();
@@ -224,15 +228,32 @@ void CPackageDlg::OnBnClickedPackageTakeBtn()
 			CPoint ptPkg;
 			GetPackagePoint(idx, ptPkg);
 			m_lstPkgPts.AddHead(ptPkg);
+			
+			DbgString(_T("Package %d, pt( %d, %d)\n"), idx, ptPkg.x, ptPkg.y);
 		}
 	}
 
+	DbgString(_T("Take Package count: %d\n"), m_lstPkgPts.GetCount());
 	if (m_lstPkgPts.GetCount() > 0) {
-		GetDlgItem(IDC_PACKAGE_TAKE_BTN)->EnableWindow(FALSE);		
-		PostMessage(UWM_TAKE_NEXT_THREAD);
+		GetDlgItem(nId)->EnableWindow(FALSE);		
+		PostMessage(message);
 	}
 
 }
+
+
+void CPackageDlg::OnBnClickedPackageTakeBtn()
+{
+
+	PackagesOperation( IDC_PACKAGE_TAKE_BTN, UWM_TAKE_NEXT_THREAD);
+}
+
+void CPackageDlg::OnBnClickedPackageOpenBtn()
+{
+	PackagesOperation( IDC_PACKAGE_OPEN_BTN, UWM_OPEN_NEXT_THREAD);	 
+}
+
+
 
 void CPackageDlg::OnBnClickedPackageClearBtn()
 {
@@ -248,9 +269,7 @@ void CPackageDlg::OnBnClickedPackageClearBtn()
 
 void CPackageDlg::OnCtrlRgn_Take_one_package_btn(UINT nID)
 {
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Take_one_package_btn(%d)\n"), nID);
-	OutputDebugString(temp);
+	DbgString(_T("OnCtrlRgn_Take_one_package_btn(%d)\n"), nID);
 	
 	EnterCriticalSection (&m_LockTackOnePackage);
 	
@@ -258,7 +277,7 @@ void CPackageDlg::OnCtrlRgn_Take_one_package_btn(UINT nID)
 
 	int nPkgId = FindPackageId( nID, offsetof(struct _PACKAGE_MAP_IDS, nBtnD_TakeOnePkg));
 	if(nPkgId == -1) {
-		OutputDebugString(_T("Invalid Pkg id.\n"));
+		DbgString(_T("Invalid Pkg id.\n"));
 		return;
 	}
 
@@ -294,7 +313,7 @@ LRESULT CPackageDlg::OnCloseSystemExecThread(WPARAM wParam, LPARAM lParam)
 
 	PSystemExecParam pParam = (PSystemExecParam)wParam;
 	
-	OutputDebugString(_T("OnCloseSystemExecThread()\n"));
+	DbgString(_T("OnCloseSystemExecThread()\n"));
 
 	// wait for thread exit.
 	Sleep(100);
@@ -304,8 +323,13 @@ LRESULT CPackageDlg::OnCloseSystemExecThread(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-
-LRESULT CPackageDlg::OnTakeNextSystemExecThread(WPARAM wParam, LPARAM lParam)
+LRESULT CPackageDlg::PackagesNextSystemExecThread(
+		int		nID,
+		UINT	nNextMessage,
+		CString	sPackageBatch,
+		WPARAM	wParam,
+		LPARAM	lParam
+		)
 {
 	PSystemExecParam pOldParam = (PSystemExecParam)wParam;
 	// wParam is NULL if trigger first 
@@ -316,18 +340,19 @@ LRESULT CPackageDlg::OnTakeNextSystemExecThread(WPARAM wParam, LPARAM lParam)
 		delete pOldParam;
 	}
 
-	OutputDebugString(_T("OnTakeNextSystemExecThread()\n"));
+	DbgString(_T("Take next package, Remain count: %d\n"), m_lstPkgPts.GetCount());
 
+	UpdateParameter();
 
 	if (m_lstPkgPts.GetCount() == 0) {
-		GetDlgItem(IDC_PACKAGE_TAKE_BTN)->EnableWindow(TRUE);
+		GetDlgItem(nID)->EnableWindow(TRUE);
 		return 0;
 	}
 		
 	CPoint pt = m_lstPkgPts.RemoveHead();
 
 	CString cmd;
-	cmd.Format(_T("%s %d %d"), m_sPackageBatch, pt.x, pt.y);
+	cmd.Format(_T("%s %d %d"), sPackageBatch, pt.x, pt.y);
 
 	
 	PSystemExecParam pParam = new SystemExecParam;
@@ -336,7 +361,7 @@ LRESULT CPackageDlg::OnTakeNextSystemExecThread(WPARAM wParam, LPARAM lParam)
 	pParam->wStatus 	= NULL;
 	pParam->btnPlay 	= NULL;
 	pParam->cmdLine 	= cmd;
-	pParam->nNoityfCloseThreadEvent = UWM_TAKE_NEXT_THREAD;
+	pParam->nNoityfCloseThreadEvent = nNextMessage;
 	pParam->hThread 	=
 						CreateThread(
 							NULL,					// default security attributes
@@ -349,6 +374,35 @@ LRESULT CPackageDlg::OnTakeNextSystemExecThread(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+
+LRESULT CPackageDlg::OnTakeNextSystemExecThread(WPARAM wParam, LPARAM lParam)
+{
+	return PackagesNextSystemExecThread(
+				IDC_PACKAGE_TAKE_BTN,
+				UWM_TAKE_NEXT_THREAD,
+				m_sPackageBatch,
+				wParam,
+				lParam
+				);
+}
+
+LRESULT CPackageDlg::OnOpenNextSystemExecThread(WPARAM wParam, LPARAM lParam)
+{
+	return PackagesNextSystemExecThread(
+				IDC_PACKAGE_OPEN_BTN,
+				UWM_OPEN_NEXT_THREAD,
+				m_sChkPackageBatch,
+				wParam,
+				lParam
+				);
+
+}
+
+
+
+
+
+
 void CPackageDlg::OnBnClickedPreviousThingBtn()
 {
 	if(m_nThingId <= 0){
@@ -358,8 +412,12 @@ void CPackageDlg::OnBnClickedPreviousThingBtn()
 		m_nThingId--;
 	}
 
+	UpdateParameter();
+
+	DbgString(_T("OnBnClickedPreviousThingBtn() PkgId:%d\n"), m_nThingId);
+
 	CString tmp;
-	tmp.Format(_T("%s"), m_nThingId + 1);
+	tmp.Format(_T("%d"), m_nThingId + 1);
 	GetDlgItem(IDC_STATIC_PKD_ID)->SetWindowText(tmp);
 
 	OpenThing(m_nThingId);	
@@ -375,8 +433,12 @@ void CPackageDlg::OnBnClickedNextThingBtn()
 		m_nThingId++;
 	}
 
+	UpdateParameter();
+
+	DbgString(_T("OnBnClickedNextThingBtn() PkgId:%d\n"), m_nThingId);
+
 	CString tmp;
-	tmp.Format(_T("%s"), m_nThingId + 1);
+	tmp.Format(_T("%d"), m_nThingId + 1);
 	GetDlgItem(IDC_STATIC_PKD_ID)->SetWindowText(tmp);
 	OpenThing(m_nThingId);	
 	
@@ -390,9 +452,13 @@ void CPackageDlg::OnBnClickedOpenThingBtn()
 	else if(m_nThingId < 0){
 		m_nThingId = 0;
 	}
+	
+	UpdateParameter();
+	
+	DbgString(_T("OnBnClickedOpenThingBtn() PkgId:%d\n"), m_nThingId);
 
 	CString tmp;
-	tmp.Format(_T("%s"), m_nThingId + 1);
+	tmp.Format(_T("%d"), m_nThingId + 1);
 	GetDlgItem(IDC_STATIC_PKD_ID)->SetWindowText(tmp);
 	OpenThing(m_nThingId);	
 	
@@ -473,6 +539,8 @@ void CPackageDlg::LoadProfile()
 	editor->SetWindowText(pApp->GetProfileString(PRJ_PKG, PRJ_INV_H));
 
 
+	UpdateParameter();
+
 
 
 
@@ -509,7 +577,8 @@ void CPackageDlg::OpenThing(int nPkgId)
 	EnterCriticalSection (&m_LockTackOnePackage);
 		CPoint ptPkg;
 		GetPackagePoint(nPkgId, ptPkg);
-
+	
+		DbgString(_T("OpenThing() PkgId:%d, pt(%d,%d)\n"), nPkgId, ptPkg.x, ptPkg.y);
 
 		CString cmd;	
 		cmd.Format(_T("%s %d %d"), m_sChkPackageBatch, ptPkg.x, ptPkg.y);
@@ -532,5 +601,8 @@ void CPackageDlg::OpenThing(int nPkgId)
 	LeaveCriticalSection (&m_LockTackOnePackage);
 	
 }
+
+
+
 
 

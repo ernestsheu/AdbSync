@@ -29,6 +29,14 @@ private:
 	void LoadProfile();
 	void SaveProfile();
 	void OpenThing(int nPkgId);
+	void PackagesOperation(int nId, UINT message);
+	LRESULT PackagesNextSystemExecThread(
+				int 	nID,
+				UINT	nNextMessage,
+				CString sPackageBatch,
+				WPARAM	wParam,
+				LPARAM	lParam
+				);
 
 
 private:
@@ -55,7 +63,9 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg LRESULT OnCloseSystemExecThread(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnTakeNextSystemExecThread(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnOpenNextSystemExecThread(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnBnClickedPackageTakeBtn();
+	afx_msg void OnBnClickedPackageOpenBtn();
 	afx_msg void OnCtrlRgn_Take_one_package_btn(UINT nID);
 	afx_msg void OnBnClickedPackageClearBtn();
 	afx_msg void OnBnClickedPreviousThingBtn();

@@ -95,7 +95,7 @@ BOOL ExecCmdSimple (
 	STARTUPINFO startupInfo = {0};
 	LPWSTR pCommandLine = NULL;
 	BOOL processCreated = FALSE;
-	BOOL bProcessEnd = TRUE;
+	BOOL bProcessEnd = FALSE;
 
 	startupInfo.cb = sizeof(startupInfo);
 
@@ -123,7 +123,7 @@ BOOL ExecCmdSimple (
 
 
 	//WaitForSingleObject(ProcessInfo.hProcess, delaytime);
-	while(bProcessEnd) {
+	while(!bProcessEnd) {
 		bProcessEnd = WaitForSingleObject(ProcessInfo.hProcess, 50) == WAIT_OBJECT_0;
 	} //for
 
@@ -239,15 +239,15 @@ exit:
 
 DWORD
 SystemExecuteThread(LPVOID lpParam)
-{
-	
+{	
 	PSystemExecParam pParam = (PSystemExecParam)lpParam;
 
 	ASSERT(pParam->wnd != NULL);
 
 	if(pParam->btnPlay != NULL) pParam->btnPlay->EnableWindow(FALSE);
 
-	int retval = ::_tsystem(pParam->cmdLine);
+	//int retval = ::_tsystem(pParam->cmdLine);
+	int retval = ExecCmdSimple(pParam->cmdLine);
 	OutputString( pParam->wStatus, _T("Play script[%s], ret:%d"), pParam->cmdLine, retval);
 
 	if(pParam->btnPlay != NULL) pParam->btnPlay->EnableWindow(TRUE);

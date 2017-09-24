@@ -257,7 +257,7 @@ BOOL CAdbControllerDlg::OnInitDialog()
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
-	SetWindowText(_T("AdbController Ver.0.02 beta"));
+	SetWindowText(_T("AdbController Ver.0.03 beta"));
 
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
 
