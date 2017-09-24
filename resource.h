@@ -141,7 +141,9 @@
 #define IDC_PREVIOUS_THING              1128
 #define IDC_NEXT_THING                  1129
 #define IDC_CLEAR_THING                 1130
-#define IDC_OPEN_THING              	1131
+#define IDC_OPEN_THING                  1131
+#define IDC_PACKAGE_TAKE_BTN2           1132
+#define IDC_PACKAGE_OPEN_BTN            1132
 
 // Next default values for new objects
 // 
