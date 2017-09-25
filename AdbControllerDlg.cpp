@@ -513,16 +513,16 @@ void CAdbControllerDlg::OnSyncTouchToSend(CString data)
 	int pos = data.Find(_T(": "));
 
 	if(pos == -1) {
-		OutputDebugString(_T("Parse Touch Event data fail.\n"));
+		DbgString(_T("Parse Touch Event data fail.\n"));
 		return;
 	}
 
 	data.Delete(0, pos + 2);
-	//OutputDebugString(data + _T("\n"));
+	//DbgString(data + _T("\n"));
 
 
 	if(data.GetLength() != TOUCH_DATA_LENGTH) {
-		OutputDebugString(_T("Invalid touch data\n"));
+		DbgString(_T("Invalid touch data\n"));
 		return;
 	}
 
@@ -531,7 +531,7 @@ void CAdbControllerDlg::OnSyncTouchToSend(CString data)
 	SplitString(data, _T(' '), touch_data);
 
 	if(touch_data.GetCount() != 3) {
-		OutputDebugString(_T("Invalid touch data field\n"));
+		DbgString(_T("Invalid touch data field\n"));
 		return;
 	}
 
@@ -548,7 +548,7 @@ void CAdbControllerDlg::OnSyncTouchToSend(CString data)
 		// adb -s NBQGLE25B1234567 shell sendevent /dev/input/event0 0003 0001 00000
 		//CString cmd;
 		//cmd.Format(_T("adb -s %s shell sendevent %s %d %d %d "), device.Serial, device.TouchEvt, type, code, value);
-		//OutputDebugString(cmd + _T("\n"));
+		//DbgString(cmd + _T("\n"));
 		//ExecCmdSimple((LPCTSTR)cmd);
 		//ShellExecute(NULL, _T("open"), _T("adb"), cmd, NULL, SW_HIDE);
 		//Sleep(100);
@@ -569,15 +569,14 @@ void CAdbControllerDlg::OnSyncOneTouchToSend(CString data)
 	int pos = data.Find(_T(": "));
 
 	if(pos == -1) {
-		OutputDebugString(_T("Parse Touch Event data fail.\n"));
+		DbgString(_T("Parse Touch Event data fail.\n"));
 		return;
 	}
 
 	data.Delete(0, pos + 2);
-	//OutputDebugString(data + _T("\n"));
 
 	if(data.GetLength() != TOUCH_DATA_LENGTH) {
-		//OutputDebugString(_T("Invalid touch data\n"));
+		//DbgString(_T("Invalid touch data\n"));
 		return;
 	}
 
@@ -586,7 +585,7 @@ void CAdbControllerDlg::OnSyncOneTouchToSend(CString data)
 	SplitString(data, _T(' '), touch_data);
 
 	if(touch_data.GetCount() != 3) {
-		//OutputDebugString(_T("Invalid touch data field\n"));
+		//DbgString(_T("Invalid touch data field\n"));
 		return;
 	}
 
@@ -618,7 +617,7 @@ void CAdbControllerDlg::OnSyncOneTouchToSend(CString data)
 	// Y
 	else if(type == 0x0003 && code == 0x0036) {
 		if( m_TapXY.x == 0) {
-			OutputDebugString(_T("Invalid tap x-y\n"));
+			DbgString(_T("Invalid tap x-y\n"));
 			return;
 		}
 
@@ -648,10 +647,8 @@ LRESULT CAdbControllerDlg::OnSyncTouch(WPARAM wParam, LPARAM lParam)
 	EnterCriticalSection (&m_SyncTouchLock);
 
 	CString* pContent = (CString*)wParam;
-
-	CString temp;
-	temp.Format(_T("SyncTouchData: Recv [%d] %d words\n"), (int)lParam, pContent->GetLength());
-	OutputDebugString(temp);
+	
+	DbgString(_T("SyncTouchData: Recv [%d] %d words\n"), (int)lParam, pContent->GetLength());
 
 	CStringList lines;
 	SplitString(*pContent, _T('\n'), lines);
@@ -672,7 +669,7 @@ LRESULT CAdbControllerDlg::OnSyncTouch(WPARAM wParam, LPARAM lParam)
 		if(line.GetLength() != TOUCH_EVENT_LENGTH
 		        && (line.GetLength() + m_SyncToucnRemainData.GetLength()) == TOUCH_EVENT_LENGTH) {
 			line = m_SyncToucnRemainData + line;
-			//OutputDebugString(line + _T("\n"));
+			//DbgString(line + _T("\n"));
 			lines.GetNext(pos);
 			//OnSyncTouchToSend(line);
 			OnSyncOneTouchToSend(line);
@@ -683,7 +680,7 @@ LRESULT CAdbControllerDlg::OnSyncTouch(WPARAM wParam, LPARAM lParam)
 		line = lines.GetNext(pos);
 
 		if(line.GetLength() == TOUCH_EVENT_LENGTH) {
-			//OutputDebugString(line + _T("\n"));
+			//DbgString(line + _T("\n"));
 			//OnSyncTouchToSend(line);
 			OnSyncOneTouchToSend(line);
 		}
@@ -795,7 +792,7 @@ void CAdbControllerDlg::OnRun()
 
 void CAdbControllerDlg::OnBreak()
 {
-	OutputDebugString(_T("OnBreak()\n"));
+	DbgString(_T("OnBreak()\n"));
 
 	if (m_pLastCommand == NULL) {
 		return;
@@ -808,7 +805,7 @@ void CAdbControllerDlg::OnBreak()
 
 void CAdbControllerDlg::OnKill()
 {
-	OutputDebugString(_T("OnKill()\n"));
+	DbgString(_T("OnKill()\n"));
 	ATLASSERT(m_pLastCommand);
 
 	CMyConsolePipe* save = m_pLastCommand;
@@ -870,17 +867,13 @@ void CAdbControllerDlg::OnBnClickedDisconnectDevices()
 
 void CAdbControllerDlg::OnCtrlRgn_Device_Id_Changed(UINT nID)
 {
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Device_Id_Changed(%d)\n"), nID);
-	OutputDebugString(temp);
+	DbgString(_T("OnCtrlRgn_Device_Id_Changed(%d)\n"), nID);
 	m_bNeedUpdateSyncDeviceList = TRUE;
 }
 
 void CAdbControllerDlg::OnCtrlRgn_Touch_Evt_Changed(UINT nID)
 {
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Touch_Evt_Changed(%d)\n"), nID);
-	OutputDebugString(temp);
+	DbgString(_T("OnCtrlRgn_Touch_Evt_Changed(%d)\n"), nID);
 	m_bNeedUpdateSyncDeviceList = TRUE;
 }
 
@@ -888,19 +881,15 @@ void CAdbControllerDlg::OnCtrlRgn_Touch_Evt_Changed(UINT nID)
 
 void CAdbControllerDlg::OnCtrlRgn_Sync_Checkbox(UINT nID)
 {
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Sync_Checkbox(%d)\n"), nID);
-	OutputDebugString(temp);
+	DbgString(_T("OnCtrlRgn_Sync_Checkbox(%d)\n"), nID);
 	m_bNeedUpdateSyncDeviceList = TRUE;
 }
 
 void CAdbControllerDlg::OnCtrlRgn_Connect_Device(UINT nID)
 {
 	OnBreak();
-
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Find_Device(%d)\n"), nID);
-	OutputDebugString(temp);
+	
+	DbgString(_T("OnCtrlRgn_Find_Device(%d)\n"), nID);
 	int nDeviceIdx = FindDeviceIndex( nID, offsetof(struct _DEVICE_CONTROL_IDS, nBtnD_FindDevice));
 
 	if(nDeviceIdx == -1) {
@@ -924,9 +913,7 @@ void CAdbControllerDlg::OnCtrlRgn_Detect_Touch_Event(UINT nID)
 {
 	OnBreak();
 
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Detect_Touch_Event(%d)\n"), nID);
-	OutputDebugString(temp);
+	DbgString(_T("OnCtrlRgn_Detect_Touch_Event(%d)\n"), nID);
 
 	int nDeviceIdx = FindDeviceIndex( nID, offsetof(struct _DEVICE_CONTROL_IDS, nBtnD_DetectTouchEvt));
 
@@ -952,9 +939,7 @@ void CAdbControllerDlg::OnCtrlRgn_Detect_Touch_Event(UINT nID)
 
 void CAdbControllerDlg::OnCtrlRgn_Play_Event(UINT nID)
 {
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Play_Event(%d)\n"), nID);
-	OutputDebugString(temp);
+	DbgString(_T("OnCtrlRgn_Play_Event(%d)\n"), nID);
 
 	int nDeviceIdx = FindDeviceIndex( nID, offsetof(struct _DEVICE_CONTROL_IDS, nBtnD_Play_Script));
 
@@ -987,9 +972,7 @@ void CAdbControllerDlg::OnCtrlRgn_Play_Event(UINT nID)
 
 void CAdbControllerDlg::OnCtrlRgn_Sync_Change(UINT nID)
 {
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Sync_Change(%d)\n"), nID);
-	OutputDebugString(temp);
+	DbgString(_T("OnCtrlRgn_Sync_Change\n"), nID);
 	m_bNeedUpdateMoveSync = TRUE;
 }
 
@@ -997,9 +980,7 @@ void CAdbControllerDlg::OnCtrlRgn_Sync_Change(UINT nID)
 
 void CAdbControllerDlg::OnCtrlRgn_Move_Event(UINT nID)
 {
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Move_Event(%d)\n"), nID);
-	OutputDebugString(temp);
+	DbgString(_T("OnCtrlRgn_Move_Event\n"), nID);
 
 	int degree = 0;
 
@@ -1133,9 +1114,7 @@ void CAdbControllerDlg::OnTouchSyncReceived(LPCTSTR pszText)
 	EnterCriticalSection (&m_SyncReceivedLock);
 
 	CString* pContent = new CString(pszText);
-	CString temp;
-	temp.Format(_T("SyncTouchData: Send [%d] %d words\n"), (int)m_SyncTouchDataOrder, pContent->GetLength());
-	OutputDebugString(temp);
+	DbgString(_T("SyncTouchData: Send [%d] %d words\n"), (int)m_SyncTouchDataOrder, pContent->GetLength());
 	PostMessage(UWM_SYNC_TOUPCH, (WPARAM)pContent, (LPARAM)m_SyncTouchDataOrder);
 	m_SyncTouchDataOrder++;
 
@@ -1180,9 +1159,7 @@ LRESULT CAdbControllerDlg::OnClosePackageDialog(WPARAM wParam, LPARAM lParam)
 
 	int nDeviceIdx = (int)wParam;
 
-	CString temp;
-	temp.Format(_T("OnClosePackageDialog(%d)\n"), nDeviceIdx);
-	OutputDebugString(temp);
+	DbgString(_T("OnClosePackageDialog(%d)\n"), nDeviceIdx);
 	
 	ASSERT(nDeviceIdx >= 0 && nDeviceIdx < TOTAL_DEVICE);
 
@@ -1194,10 +1171,7 @@ LRESULT CAdbControllerDlg::OnClosePackageDialog(WPARAM wParam, LPARAM lParam)
 
 void CAdbControllerDlg::OnCtrlRgn_Open_PackageDlg_Event(UINT nID)
 {
-	CString temp;
-	temp.Format(_T("OnCtrlRgn_Open_PackageDlg_Event(%d)\n"), nID);
-	OutputDebugString(temp);
-
+	DbgString(_T("OnCtrlRgn_Open_PackageDlg_Event(%d)\n"), nID);
 
 	int nDeviceIdx = FindDeviceIndex( nID, offsetof(struct _DEVICE_CONTROL_IDS, nBtnD_OpenPkgDlg));
 	if(nDeviceIdx == -1) {

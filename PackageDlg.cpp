@@ -45,11 +45,11 @@ static DEVICE_CONTROL_IDS G_PACKAGE_ID_MAP[TOTAL_PACKAGES] = {
 	},
 	{
 		IDC_PACKAGE_BTN3,
-		IDC_PACKAGE_CHECK4
+		IDC_PACKAGE_CHECK3
 	},
 	{
 		IDC_PACKAGE_BTN4,
-		IDC_PACKAGE_CHECK5
+		IDC_PACKAGE_CHECK4
 	},
 	{
 		IDC_PACKAGE_BTN5,
@@ -85,11 +85,11 @@ static DEVICE_CONTROL_IDS G_PACKAGE_ID_MAP[TOTAL_PACKAGES] = {
 	},
 	{
 		IDC_PACKAGE_BTN13,
-		IDC_PACKAGE_CHECK14
+		IDC_PACKAGE_CHECK13
 	},
 	{
 		IDC_PACKAGE_BTN14,
-		IDC_PACKAGE_CHECK15
+		IDC_PACKAGE_CHECK14
 	},
 	{
 		IDC_PACKAGE_BTN15,
@@ -192,6 +192,8 @@ BOOL CPackageDlg::OnInitDialog()
 	m_sChkPackageBatch.Format(_T("\"%s\\%s\" %s "), m_sWorkingFolder, SCR_PKG_OPEN, m_Serial);
 	GetDlgItem(IDC_STATIC_PKD_ID)->SetWindowText(_T("1"));
 
+	m_wEditStatus = (CEdit*)GetDlgItem(IDC_PACKAGE_STATUS);
+
 	return TRUE;
 }
 
@@ -267,141 +269,6 @@ void CPackageDlg::OnBnClickedPackageClearBtn()
 }
 
 
-void CPackageDlg::OnCtrlRgn_Take_one_package_btn(UINT nID)
-{
-	DbgString(_T("OnCtrlRgn_Take_one_package_btn(%d)\n"), nID);
-	
-	EnterCriticalSection (&m_LockTackOnePackage);
-	
-	UpdateParameter();
-
-	int nPkgId = FindPackageId( nID, offsetof(struct _PACKAGE_MAP_IDS, nBtnD_TakeOnePkg));
-	if(nPkgId == -1) {
-		DbgString(_T("Invalid Pkg id.\n"));
-		return;
-	}
-
-	CPoint ptPkg;
-	GetPackagePoint( nPkgId, ptPkg);
-
-	
-	CString cmd;
-	//cmd.Format(_T("adb -s %s shell input tap %d %d"), m_Serial, ptPkg.x, ptPkg.y);	
-	cmd.Format(_T("%s %d %d"), m_sPackageBatch, ptPkg.x, ptPkg.y);
-	
-	PSystemExecParam pParam = new SystemExecParam;
-	
-	pParam->wnd 		= this;
-	pParam->wStatus 	= NULL;
-	pParam->btnPlay 	= (CButton*)GetDlgItem(nID);
-	pParam->cmdLine 	= cmd;
-	pParam->nNoityfCloseThreadEvent = UWM_CLOSE_TAKE_THREAD;
-	pParam->hThread 	=
-						CreateThread(
-							NULL,					// default security attributes
-							0,						// use default stack size
-							SystemExecuteThread,	// thread function name
-							pParam, 				// argument to thread function
-							0,						// use default creation flags
-							NULL);					// returns the thread identifier
-	
-	LeaveCriticalSection (&m_LockTackOnePackage);
-}
-
-LRESULT CPackageDlg::OnCloseSystemExecThread(WPARAM wParam, LPARAM lParam)
-{
-
-	PSystemExecParam pParam = (PSystemExecParam)wParam;
-	
-	DbgString(_T("OnCloseSystemExecThread()\n"));
-
-	// wait for thread exit.
-	Sleep(100);
-	CloseHandle(pParam->hThread);
-	delete pParam;
-	
-	return 0;
-}
-
-LRESULT CPackageDlg::PackagesNextSystemExecThread(
-		int		nID,
-		UINT	nNextMessage,
-		CString	sPackageBatch,
-		WPARAM	wParam,
-		LPARAM	lParam
-		)
-{
-	PSystemExecParam pOldParam = (PSystemExecParam)wParam;
-	// wParam is NULL if trigger first 
-	if(pOldParam != NULL) {
-		// wait for thread exit.
-		Sleep(100);
-		CloseHandle(pOldParam->hThread);
-		delete pOldParam;
-	}
-
-	DbgString(_T("Take next package, Remain count: %d\n"), m_lstPkgPts.GetCount());
-
-	UpdateParameter();
-
-	if (m_lstPkgPts.GetCount() == 0) {
-		GetDlgItem(nID)->EnableWindow(TRUE);
-		return 0;
-	}
-		
-	CPoint pt = m_lstPkgPts.RemoveHead();
-
-	CString cmd;
-	cmd.Format(_T("%s %d %d"), sPackageBatch, pt.x, pt.y);
-
-	
-	PSystemExecParam pParam = new SystemExecParam;
-	
-	pParam->wnd 		= this;
-	pParam->wStatus 	= NULL;
-	pParam->btnPlay 	= NULL;
-	pParam->cmdLine 	= cmd;
-	pParam->nNoityfCloseThreadEvent = nNextMessage;
-	pParam->hThread 	=
-						CreateThread(
-							NULL,					// default security attributes
-							0,						// use default stack size
-							SystemExecuteThread,	// thread function name
-							pParam, 				// argument to thread function
-							0,						// use default creation flags
-							NULL);					// returns the thread identifier	
-		
-	return 0;
-}
-
-
-LRESULT CPackageDlg::OnTakeNextSystemExecThread(WPARAM wParam, LPARAM lParam)
-{
-	return PackagesNextSystemExecThread(
-				IDC_PACKAGE_TAKE_BTN,
-				UWM_TAKE_NEXT_THREAD,
-				m_sPackageBatch,
-				wParam,
-				lParam
-				);
-}
-
-LRESULT CPackageDlg::OnOpenNextSystemExecThread(WPARAM wParam, LPARAM lParam)
-{
-	return PackagesNextSystemExecThread(
-				IDC_PACKAGE_OPEN_BTN,
-				UWM_OPEN_NEXT_THREAD,
-				m_sChkPackageBatch,
-				wParam,
-				lParam
-				);
-
-}
-
-
-
-
-
 
 void CPackageDlg::OnBnClickedPreviousThingBtn()
 {
@@ -472,6 +339,87 @@ void CPackageDlg::OnBnClickedClearThingBtn()
 	
 }
 
+
+void CPackageDlg::OnCtrlRgn_Take_one_package_btn(UINT nID)
+{
+	DbgString(_T("OnCtrlRgn_Take_one_package_btn(%d)\n"), nID);
+	
+	EnterCriticalSection (&m_LockTackOnePackage);
+	
+	UpdateParameter();
+
+	int nPkgId = FindPackageId( nID, offsetof(struct _PACKAGE_MAP_IDS, nBtnD_TakeOnePkg));
+	if(nPkgId == -1) {
+		DbgString(_T("Invalid Pkg id.\n"));
+		return;
+	}
+
+	CPoint ptPkg;
+	GetPackagePoint( nPkgId, ptPkg);
+
+	
+	CString cmd;
+	//cmd.Format(_T("adb -s %s shell input tap %d %d"), m_Serial, ptPkg.x, ptPkg.y);	
+	cmd.Format(_T("%s %d %d"), m_sPackageBatch, ptPkg.x, ptPkg.y);
+	
+	PSystemExecParam pParam = new SystemExecParam;
+	
+	pParam->wnd 		= this;
+	pParam->wStatus 	= NULL;
+	pParam->btnPlay 	= (CButton*)GetDlgItem(nID);
+	pParam->cmdLine 	= cmd;
+	pParam->nNoityfCloseThreadEvent = UWM_CLOSE_TAKE_THREAD;
+	pParam->hThread 	=
+						CreateThread(
+							NULL,					// default security attributes
+							0,						// use default stack size
+							SystemExecuteThread,	// thread function name
+							pParam, 				// argument to thread function
+							0,						// use default creation flags
+							NULL);					// returns the thread identifier
+	
+	LeaveCriticalSection (&m_LockTackOnePackage);
+}
+
+LRESULT CPackageDlg::OnCloseSystemExecThread(WPARAM wParam, LPARAM lParam)
+{
+
+	PSystemExecParam pParam = (PSystemExecParam)wParam;
+	
+	DbgString(_T("OnCloseSystemExecThread()\n"));
+
+	// wait for thread exit.
+	Sleep(100);
+	CloseHandle(pParam->hThread);
+	delete pParam;
+	
+	return 0;
+}
+
+
+
+LRESULT CPackageDlg::OnTakeNextSystemExecThread(WPARAM wParam, LPARAM lParam)
+{
+	return PackagesNextSystemExecThread(
+				IDC_PACKAGE_TAKE_BTN,
+				UWM_TAKE_NEXT_THREAD,
+				m_sPackageBatch,
+				wParam,
+				lParam
+				);
+}
+
+LRESULT CPackageDlg::OnOpenNextSystemExecThread(WPARAM wParam, LPARAM lParam)
+{
+	return PackagesNextSystemExecThread(
+				IDC_PACKAGE_OPEN_BTN,
+				UWM_OPEN_NEXT_THREAD,
+				m_sChkPackageBatch,
+				wParam,
+				lParam
+				);
+
+}
 
 int CPackageDlg::FindPackageId(UINT nControlId, int member)
 {
@@ -582,6 +530,8 @@ void CPackageDlg::OpenThing(int nPkgId)
 
 		CString cmd;	
 		cmd.Format(_T("%s %d %d"), m_sChkPackageBatch, ptPkg.x, ptPkg.y);
+		
+		OutputString(m_wEditStatus, _T("Open Package id:%d, pt(%d,%d) remain count: %d" ), nPkgId, ptPkg.x, ptPkg.y);
 
 		PSystemExecParam pParam = new SystemExecParam;
 
@@ -602,6 +552,59 @@ void CPackageDlg::OpenThing(int nPkgId)
 	
 }
 
+
+LRESULT CPackageDlg::PackagesNextSystemExecThread(
+		int		nID,
+		UINT	nNextMessage,
+		CString	sPackageBatch,
+		WPARAM	wParam,
+		LPARAM	lParam
+		)
+{
+	PSystemExecParam pOldParam = (PSystemExecParam)wParam;
+	// wParam is NULL if trigger first 
+	if(pOldParam != NULL) {
+		// wait for thread exit.
+		Sleep(100);
+		CloseHandle(pOldParam->hThread);
+		delete pOldParam;
+	}
+
+	DbgString(_T("Take next package, Remain count: %d\n"), m_lstPkgPts.GetCount());
+
+	UpdateParameter();
+
+	if (m_lstPkgPts.GetCount() == 0) {
+		GetDlgItem(nID)->EnableWindow(TRUE);
+		return 0;
+	}
+		
+	CPoint pt = m_lstPkgPts.RemoveHead();
+
+	CString cmd;
+	cmd.Format(_T("%s %d %d"), sPackageBatch, pt.x, pt.y);
+
+	OutputString(m_wEditStatus, _T("Next Package, pt(%d,%d) remain count: %d" ), pt.x, pt.y, m_lstPkgPts.GetCount());
+
+	
+	PSystemExecParam pParam = new SystemExecParam;
+	
+	pParam->wnd 		= this;
+	pParam->wStatus 	= m_wEditStatus;
+	pParam->btnPlay 	= NULL;
+	pParam->cmdLine 	= cmd;
+	pParam->nNoityfCloseThreadEvent = nNextMessage;
+	pParam->hThread 	=
+						CreateThread(
+							NULL,					// default security attributes
+							0,						// use default stack size
+							SystemExecuteThread,	// thread function name
+							pParam, 				// argument to thread function
+							0,						// use default creation flags
+							NULL);					// returns the thread identifier	
+		
+	return 0;
+}
 
 
 

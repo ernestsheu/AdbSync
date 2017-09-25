@@ -43,7 +43,7 @@ void OutputString(CEdit* pEdit, LPCTSTR pszFormat, ...)
 	va_end( argList );
 
 	if(pEdit == NULL) {
-		OutputDebugString(str + _T("\n"));
+		DbgString(str + _T("\n"));
 		return;
 	}
 
@@ -71,7 +71,7 @@ void OutputString(CEdit* pEdit, LPCTSTR pszFormat, ...)
 }
 
 
-void DbgString(LPCTSTR pszFormat, ...)
+CString& DbgString(LPCTSTR pszFormat, ...)
 {
 	CString str;
 	va_list argList;
@@ -82,6 +82,7 @@ void DbgString(LPCTSTR pszFormat, ...)
 	
 	OutputDebugString(str);
 
+	return str;
 }
 
 

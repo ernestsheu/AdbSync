@@ -167,12 +167,12 @@ AdbExecThread(LPVOID lpParam)
 		switch (dwEvent) {
 			// nTouchEvent
 			case WAIT_OBJECT_0 + 0: {
-				//OutputDebugString(_T("First event was signaled.\n"));
+				//DbgString(_T("First event was signaled.\n"));
 
 				if(pDevice->bSync) {
 					CString cmd;
 					cmd.Format(_T("adb -s %s shell input tap %d %d "), pDevice->Serial, pDevice->ptTapXY.x, pDevice->ptTapXY.y);
-					OutputDebugString(cmd + _T("\n"));
+					DbgString(cmd + _T("\n"));					
 					OutputString(
 					    pDevice->wndStatus,
 					    _T("[%s] Tap( %d, %d)"),
@@ -209,19 +209,18 @@ AdbExecThread(LPVOID lpParam)
 
 			// hExitEvent
 			case WAIT_OBJECT_0 + 2:
-				OutputDebugString(_T("Exit event was signaled.\n"));
+				DbgString(_T("Exit event was signaled.\n"));
 				goto exit;
 
 			case WAIT_TIMEOUT:
-				//OutputDebugString(_T("Wait timed out.\n"));
+				//DbgString(_T("Wait timed out.\n"));
 				break;
 
 			// Return value is invalid.
 			default:
-				CString Tmp;
-				Tmp.Format(_T("[%s] Wait error: evt:%d err:%d\n"), pDevice->Serial, dwEvent, GetLastError());
-				OutputDebugString(Tmp);
-				OutputString( pDevice->wndStatus, Tmp);
+			
+				CString dbgString = DbgString(_T("[%s] Wait error: evt:%d err:%d\n"), pDevice->Serial, dwEvent, GetLastError());
+				OutputString( pDevice->wndStatus, dbgString);
 				ExitProcess(0);
 		}
 	}
@@ -229,8 +228,8 @@ AdbExecThread(LPVOID lpParam)
 
 exit:
 	SetEvent(pDevice->hExitFinishedEvent);
-
 	return 0;
+	
 }
 
 

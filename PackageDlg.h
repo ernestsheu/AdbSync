@@ -55,6 +55,8 @@ private:
 	CString m_sPackageBatch;
 	CString m_sChkPackageBatch;
 	int m_nThingId;
+
+	CEdit* m_wEditStatus;
 	
 	DECLARE_MESSAGE_MAP()
 public:

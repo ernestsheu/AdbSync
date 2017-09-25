@@ -142,8 +142,8 @@
 #define IDC_NEXT_THING                  1129
 #define IDC_CLEAR_THING                 1130
 #define IDC_OPEN_THING                  1131
-#define IDC_PACKAGE_TAKE_BTN2           1132
 #define IDC_PACKAGE_OPEN_BTN            1132
+#define IDC_PACKAGE_STATUS              1133
 
 // Next default values for new objects
 // 
@@ -151,7 +151,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1132
+#define _APS_NEXT_CONTROL_VALUE         1134
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
